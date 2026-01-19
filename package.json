@@ -19,12 +19,14 @@
   "main": "./dist/react-dxf-viewer.umd.js",
   "module": "./dist/react-dxf-viewer.es.js",
   "types": "./dist/index.d.ts",
+  
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/react-dxf-viewer.es.js",
       "require": "./dist/react-dxf-viewer.umd.js"
-    }
+    },
+    "./dist/style.css": "./dist/react-dxf-viewer.css"
   },
   "scripts": {
     "dev": "vite",
