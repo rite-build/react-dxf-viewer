@@ -9,7 +9,7 @@ import {
   ZoomIn, 
   ZoomOut, 
   RotateCcw, 
-  Square
+  SquareDashedMousePointer
 } from "lucide-react";
 
 // Hook to store latest callback in ref (prevents effect re-runs)
@@ -567,7 +567,7 @@ export function DxfViewer({
                   onClick={handleTogglePolygonMode}
                   title="Polygon Selection Tool"
                 >
-                  <Square size={18} />
+                  <SquareDashedMousePointer size={18} />
                 </ToolbarButton>
               )}
 

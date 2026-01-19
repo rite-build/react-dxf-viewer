@@ -1,7 +1,7 @@
-var Ce = Object.defineProperty;
-var Se = (c, e, t) => e in c ? Ce(c, e, { enumerable: !0, configurable: !0, writable: !0, value: t }) : c[e] = t;
-var d = (c, e, t) => Se(c, typeof e != "symbol" ? e + "" : e, t);
-import Me, { forwardRef as Oe, createElement as pe, useMemo as Re, useRef as ie, useState as se, useEffect as K, useCallback as J } from "react";
+var Me = Object.defineProperty;
+var Ce = (c, e, t) => e in c ? Me(c, e, { enumerable: !0, configurable: !0, writable: !0, value: t }) : c[e] = t;
+var d = (c, e, t) => Ce(c, typeof e != "symbol" ? e + "" : e, t);
+import Se, { forwardRef as Oe, createElement as ve, useMemo as Re, useRef as ie, useState as se, useEffect as K, useCallback as J } from "react";
 import * as a from "three";
 var ue = { exports: {} }, oe = {};
 /**
@@ -13,10 +13,10 @@ var ue = { exports: {} }, oe = {};
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  */
-var ye;
+var ge;
 function De() {
-  if (ye) return oe;
-  ye = 1;
+  if (ge) return oe;
+  ge = 1;
   var c = Symbol.for("react.transitional.element"), e = Symbol.for("react.fragment");
   function t(n, i, s) {
     var o = null;
@@ -46,7 +46,7 @@ var ae = {};
  * LICENSE file in the root directory of this source tree.
  */
 var xe;
-function Te() {
+function ke() {
   return xe || (xe = 1, process.env.NODE_ENV !== "production" && (function() {
     function c(r) {
       if (r == null) return null;
@@ -73,7 +73,7 @@ function Te() {
         ), r.$$typeof) {
           case O:
             return "Portal";
-          case v:
+          case m:
             return r.displayName || "Context";
           case E:
             return (r._context.displayName || "Context") + ".Consumer";
@@ -103,8 +103,8 @@ function Te() {
       }
       if (f) {
         f = console;
-        var g = f.error, L = typeof Symbol == "function" && Symbol.toStringTag && r[Symbol.toStringTag] || r.constructor.name || "Object";
-        return g.call(
+        var y = f.error, L = typeof Symbol == "function" && Symbol.toStringTag && r[Symbol.toStringTag] || r.constructor.name || "Object";
+        return y.call(
           f,
           "The provided key is an unsupported type %s. This value must be coerced to a string before using it here.",
           L
@@ -137,34 +137,34 @@ function Te() {
       return r.key !== void 0;
     }
     function l(r, f) {
-      function g() {
+      function y() {
         le || (le = !0, console.error(
           "%s: `key` is not a prop. Trying to access it will result in `undefined` being returned. If you need to access the same value within the child component, you should pass it as a different prop. (https://react.dev/link/special-props)",
           f
         ));
       }
-      g.isReactWarning = !0, Object.defineProperty(r, "key", {
-        get: g,
+      y.isReactWarning = !0, Object.defineProperty(r, "key", {
+        get: y,
         configurable: !0
       });
     }
-    function m() {
+    function p() {
       var r = c(this.type);
       return ee[r] || (ee[r] = !0, console.error(
         "Accessing element.ref was removed in React 19. ref is now a regular prop. It will be removed from the JSX Element type in a future release."
       )), r = this.props.ref, r !== void 0 ? r : null;
     }
-    function b(r, f, g, L, Z, re) {
-      var _ = g.ref;
+    function b(r, f, y, L, Z, re) {
+      var _ = y.ref;
       return r = {
         $$typeof: j,
         type: r,
         key: f,
-        props: g,
+        props: y,
         _owner: L
       }, (_ !== void 0 ? _ : null) !== null ? Object.defineProperty(r, "ref", {
         enumerable: !1,
-        get: m
+        get: p
       }) : Object.defineProperty(r, "ref", { enumerable: !1, value: null }), r._store = {}, Object.defineProperty(r._store, "validated", {
         configurable: !1,
         enumerable: !1,
@@ -187,19 +187,19 @@ function Te() {
         value: re
       }), Object.freeze && (Object.freeze(r.props), Object.freeze(r)), r;
     }
-    function P(r, f, g, L, Z, re) {
+    function P(r, f, y, L, Z, re) {
       var _ = f.children;
       if (_ !== void 0)
         if (L)
           if (Q(_)) {
             for (L = 0; L < _.length; L++)
-              T(_[L]);
+              k(_[L]);
             Object.freeze && Object.freeze(_);
           } else
             console.error(
               "React.jsx: Static children should always be an array. You are likely explicitly calling React.jsxs or React.jsxDEV. Use the Babel transform instead."
             );
-        else T(_);
+        else k(_);
       if (V.call(f, "key")) {
         _ = c(r);
         var X = Object.keys(f).filter(function(u) {
@@ -218,57 +218,57 @@ React keys must be passed directly to JSX without using spread:
           _
         ), $[_ + L] = !0);
       }
-      if (_ = null, g !== void 0 && (t(g), _ = "" + g), o(f) && (t(f.key), _ = "" + f.key), "key" in f) {
-        g = {};
+      if (_ = null, y !== void 0 && (t(y), _ = "" + y), o(f) && (t(f.key), _ = "" + f.key), "key" in f) {
+        y = {};
         for (var h in f)
-          h !== "key" && (g[h] = f[h]);
-      } else g = f;
+          h !== "key" && (y[h] = f[h]);
+      } else y = f;
       return _ && l(
-        g,
+        y,
         typeof r == "function" ? r.displayName || r.name || "Unknown" : r
       ), b(
         r,
         _,
-        g,
+        y,
         i(),
         Z,
         re
       );
     }
-    function T(r) {
-      S(r) ? r._store && (r._store.validated = 1) : typeof r == "object" && r !== null && r.$$typeof === w && (r._payload.status === "fulfilled" ? S(r._payload.value) && r._payload.value._store && (r._payload.value._store.validated = 1) : r._store && (r._store.validated = 1));
+    function k(r) {
+      C(r) ? r._store && (r._store.validated = 1) : typeof r == "object" && r !== null && r.$$typeof === w && (r._payload.status === "fulfilled" ? C(r._payload.value) && r._payload.value._store && (r._payload.value._store.validated = 1) : r._store && (r._store.validated = 1));
     }
-    function S(r) {
+    function C(r) {
       return typeof r == "object" && r !== null && r.$$typeof === j;
     }
-    var M = Me, j = Symbol.for("react.transitional.element"), O = Symbol.for("react.portal"), R = Symbol.for("react.fragment"), A = Symbol.for("react.strict_mode"), G = Symbol.for("react.profiler"), E = Symbol.for("react.consumer"), v = Symbol.for("react.context"), N = Symbol.for("react.forward_ref"), F = Symbol.for("react.suspense"), W = Symbol.for("react.suspense_list"), D = Symbol.for("react.memo"), w = Symbol.for("react.lazy"), I = Symbol.for("react.activity"), Y = Symbol.for("react.client.reference"), B = M.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, V = Object.prototype.hasOwnProperty, Q = Array.isArray, z = console.createTask ? console.createTask : function() {
+    var S = Se, j = Symbol.for("react.transitional.element"), O = Symbol.for("react.portal"), R = Symbol.for("react.fragment"), A = Symbol.for("react.strict_mode"), G = Symbol.for("react.profiler"), E = Symbol.for("react.consumer"), m = Symbol.for("react.context"), N = Symbol.for("react.forward_ref"), F = Symbol.for("react.suspense"), W = Symbol.for("react.suspense_list"), D = Symbol.for("react.memo"), w = Symbol.for("react.lazy"), I = Symbol.for("react.activity"), Y = Symbol.for("react.client.reference"), B = S.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, V = Object.prototype.hasOwnProperty, Q = Array.isArray, z = console.createTask ? console.createTask : function() {
       return null;
     };
-    M = {
+    S = {
       react_stack_bottom_frame: function(r) {
         return r();
       }
     };
-    var le, ee = {}, U = M.react_stack_bottom_frame.bind(
-      M,
+    var le, ee = {}, U = S.react_stack_bottom_frame.bind(
+      S,
       s
     )(), q = z(n(s)), $ = {};
-    ae.Fragment = R, ae.jsx = function(r, f, g) {
+    ae.Fragment = R, ae.jsx = function(r, f, y) {
       var L = 1e4 > B.recentlyCreatedOwnerStacks++;
       return P(
         r,
         f,
-        g,
+        y,
         !1,
         L ? Error("react-stack-top-frame") : U,
         L ? z(n(r)) : q
       );
-    }, ae.jsxs = function(r, f, g) {
+    }, ae.jsxs = function(r, f, y) {
       var L = 1e4 > B.recentlyCreatedOwnerStacks++;
       return P(
         r,
         f,
-        g,
+        y,
         !0,
         L ? Error("react-stack-top-frame") : U,
         L ? z(n(r)) : q
@@ -277,10 +277,10 @@ React keys must be passed directly to JSX without using spread:
   })()), ae;
 }
 var be;
-function ke() {
-  return be || (be = 1, process.env.NODE_ENV === "production" ? ue.exports = De() : ue.exports = Te()), ue.exports;
+function Te() {
+  return be || (be = 1, process.env.NODE_ENV === "production" ? ue.exports = De() : ue.exports = ke()), ue.exports;
 }
-var x = ke();
+var x = Te();
 function Le(c) {
   const e = c.isLineSegments2;
   if (!(c instanceof a.Mesh || c instanceof a.Line || c instanceof a.LineSegments || e))
@@ -288,24 +288,24 @@ function Le(c) {
   const t = c.geometry;
   if (!t) return null;
   if (e) {
-    const m = t.getAttribute("instanceStart"), b = t.getAttribute("instanceEnd");
-    if (!m || !b) {
+    const p = t.getAttribute("instanceStart"), b = t.getAttribute("instanceEnd");
+    if (!p || !b) {
       if (!t.getAttribute("position")) return null;
     } else {
       const P = new a.Box3();
-      let T = !1;
+      let k = !1;
       c.updateMatrixWorld(!0);
-      const S = (M) => {
-        const j = M.array, O = M.itemSize;
+      const C = (S) => {
+        const j = S.array, O = S.itemSize;
         for (let R = 0; R < j.length; R += O) {
           const A = j[R], G = j[R + 1], E = O > 2 ? j[R + 2] : 0;
           if (isFinite(A) && isFinite(G) && isFinite(E)) {
-            const v = new a.Vector3(A, G, E).applyMatrix4(c.matrixWorld);
-            isFinite(v.x) && isFinite(v.y) && isFinite(v.z) && (P.expandByPoint(v), T = !0);
+            const m = new a.Vector3(A, G, E).applyMatrix4(c.matrixWorld);
+            isFinite(m.x) && isFinite(m.y) && isFinite(m.z) && (P.expandByPoint(m), k = !0);
           }
         }
       };
-      return S(m), S(b), T ? P : null;
+      return C(p), C(b), k ? P : null;
     }
   }
   const n = t.getAttribute("position");
@@ -313,11 +313,11 @@ function Le(c) {
   const i = n.array, s = n.itemSize, o = new a.Box3();
   let l = !1;
   c.updateMatrixWorld(!0);
-  for (let m = 0; m < i.length; m += s) {
-    const b = i[m], P = i[m + 1], T = s > 2 ? i[m + 2] : 0;
-    if (isFinite(b) && isFinite(P) && isFinite(T)) {
-      const S = new a.Vector3(b, P, T).applyMatrix4(c.matrixWorld);
-      isFinite(S.x) && isFinite(S.y) && isFinite(S.z) && (o.expandByPoint(S), l = !0);
+  for (let p = 0; p < i.length; p += s) {
+    const b = i[p], P = i[p + 1], k = s > 2 ? i[p + 2] : 0;
+    if (isFinite(b) && isFinite(P) && isFinite(k)) {
+      const C = new a.Vector3(b, P, k).applyMatrix4(c.matrixWorld);
+      isFinite(C.x) && isFinite(C.y) && isFinite(C.z) && (o.expandByPoint(C), l = !0);
     }
   }
   return l ? o : null;
@@ -342,24 +342,24 @@ function Fe(c, e, t, n) {
   const i = we(c, e, t), s = new a.Vector3(i.x, i.y, 0);
   return s.unproject(n), s.z = 0, s;
 }
-let k = null;
+let T = null;
 async function Ie() {
-  return k || (k = await import("./Line2Helper-D4QmpFuS.js")), k;
+  return T || (T = await import("./Line2Helper-D4QmpFuS.js")), T;
 }
 function Pe(c, e, t = 1) {
-  return k ? k.getLineMaterial(c, e, t) : new a.LineBasicMaterial({ color: c, linewidth: e, transparent: !0, opacity: t });
+  return T ? T.getLineMaterial(c, e, t) : new a.LineBasicMaterial({ color: c, linewidth: e, transparent: !0, opacity: t });
 }
 function je(c, e, t, n) {
-  return k ? k.createOverlayFromCoordinates(c, e, t, n) : null;
+  return T ? T.createOverlayFromCoordinates(c, e, t, n) : null;
 }
 function Ne(c, e) {
-  return k ? k.createOverlay(c, e) : null;
+  return T ? T.createOverlay(c, e) : null;
 }
 function He(c, e) {
-  k && k.updateResolution(c, e);
+  T && T.updateResolution(c, e);
 }
 function Ge() {
-  k && k.clearLineMaterialCache();
+  T && T.clearLineMaterialCache();
 }
 class Be {
   constructor(e, t) {
@@ -472,7 +472,7 @@ class Be {
     if (!o || this.activeOverlays.has(o)) return !1;
     o.updateMatrixWorld(!0);
     let l = null;
-    const m = o.userData.dxfHandle, b = s ? null : this.getGeometryFromHandle(m);
+    const p = o.userData.dxfHandle, b = s ? null : this.getGeometryFromHandle(p);
     if (b) {
       const P = Pe(t, n, i);
       l = je(
@@ -629,12 +629,12 @@ class Be {
     e.forEach((l) => this.selectedHandles.add(l.toLowerCase())), t.length > 0 && this.highlightContext(t);
     const s = [];
     if (this.viewer.GetScene().traverse((l) => {
-      const m = l.userData.dxfHandle;
-      m && i.includes(m.toLowerCase()) && l.parent !== this.interactionLayer && ((l instanceof a.LineSegments || l instanceof a.Line) && l.geometry && !l.geometry.boundingBox && l.geometry.computeBoundingBox(), s.push(l));
+      const p = l.userData.dxfHandle;
+      p && i.includes(p.toLowerCase()) && l.parent !== this.interactionLayer && ((l instanceof a.LineSegments || l instanceof a.Line) && l.geometry && !l.geometry.boundingBox && l.geometry.computeBoundingBox(), s.push(l));
     }), s.length === 0) return;
     s.forEach((l) => {
-      const m = l.userData.dxfType;
-      (m === "TEXT" || m === "MTEXT" || m === "ATTRIB") && l instanceof a.LineSegments ? this.addOverlay(l, 39423, 2, 1, !0) : this.addOverlay(l, 39423, 5);
+      const p = l.userData.dxfType;
+      (p === "TEXT" || p === "MTEXT" || p === "ATTRIB") && l instanceof a.LineSegments ? this.addOverlay(l, 39423, 2, 1, !0) : this.addOverlay(l, 39423, 5);
     }), this.viewer.Render();
     const o = Ae(s);
     !o || o.isEmpty() || (t.length === 0 && this.highlightContextInBounds(o, Array.from(this.selectedHandles)), this.createBoundingBoxOverlay(o), n && this.animateToFit(o, 800));
@@ -647,8 +647,8 @@ class Be {
       if (o.parent === this.interactionLayer) return;
       const l = o.userData.dxfHandle;
       if (l && s.includes(l.toLowerCase()) || !(o instanceof a.Mesh || o instanceof a.Line || o instanceof a.LineSegments)) return;
-      const m = new a.Vector3();
-      o.getWorldPosition(m), n.containsPoint(m) && this.addOverlay(o, 13421772, 2);
+      const p = new a.Vector3();
+      o.getWorldPosition(p), n.containsPoint(p) && this.addOverlay(o, 13421772, 2);
     }), this.viewer.Render();
   }
   clearHighlights() {
@@ -671,11 +671,11 @@ class Be {
         depthTest: !1
       });
       this.boundingBoxMesh = new a.Mesh(s, o), this.boundingBoxMesh.position.copy(n);
-      const l = new a.EdgesGeometry(s), m = new a.LineBasicMaterial({
+      const l = new a.EdgesGeometry(s), p = new a.LineBasicMaterial({
         color: 9647082,
         linewidth: 2,
         depthTest: !1
-      }), b = new a.LineSegments(l, m);
+      }), b = new a.LineSegments(l, p);
       this.boundingBoxMesh.add(b), this.viewer.GetScene().add(this.boundingBoxMesh), this.viewer.Render();
     } catch (s) {
       console.error("[EntityInteraction] Error creating bounding box overlay:", s);
@@ -687,9 +687,9 @@ class Be {
     if (e.isEmpty() || !isFinite(e.min.x) || !isFinite(e.min.y)) return;
     const i = new a.Vector3(), s = new a.Vector3();
     e.getSize(i), e.getCenter(s);
-    const o = s.x - n.x, l = s.y - n.y, m = this.viewer.GetCanvas(), b = m ? m.width : 800, P = m ? m.height : 600, T = b / P, S = 1.5;
-    let M = i.x * S;
-    i.y * S * T > M && (M = i.y * S * T), M = Math.max(M, 30);
+    const o = s.x - n.x, l = s.y - n.y, p = this.viewer.GetCanvas(), b = p ? p.width : 800, P = p ? p.height : 600, k = b / P, C = 1.5;
+    let S = i.x * C;
+    i.y * C * k > S && (S = i.y * C * k), S = Math.max(S, 30);
     let O = null;
     const R = performance.now(), A = (G) => {
       if (!O) {
@@ -702,18 +702,18 @@ class Be {
           cx: w.position.x - n.x,
           cy: w.position.y - n.y,
           vw: w.right - w.left
-        }, Math.hypot(o - O.cx, l - O.cy) < O.vw * 0.01 && Math.abs(M - O.vw) < O.vw * 0.01) {
+        }, Math.hypot(o - O.cx, l - O.cy) < O.vw * 0.01 && Math.abs(S - O.vw) < O.vw * 0.01) {
           this.animationFrameId = null;
           return;
         }
       }
-      const E = G - R, v = Math.min(E / t, 1), N = v < 0.5 ? 4 * v * v * v : 1 - Math.pow(-2 * v + 2, 3) / 2, F = O.cx + (o - O.cx) * N, W = O.cy + (l - O.cy) * N, D = O.vw + (M - O.vw) * N;
-      this.viewer.SetView({ x: F + n.x, y: W + n.y }, D), this.viewer.Render(), v < 1 ? this.animationFrameId = requestAnimationFrame(A) : this.animationFrameId = null;
+      const E = G - R, m = Math.min(E / t, 1), N = m < 0.5 ? 4 * m * m * m : 1 - Math.pow(-2 * m + 2, 3) / 2, F = O.cx + (o - O.cx) * N, W = O.cy + (l - O.cy) * N, D = O.vw + (S - O.vw) * N;
+      this.viewer.SetView({ x: F + n.x, y: W + n.y }, D), this.viewer.Render(), m < 1 ? this.animationFrameId = requestAnimationFrame(A) : this.animationFrameId = null;
     };
     this.animationFrameId = requestAnimationFrame(A);
   }
 }
-const Ve = 40, ze = 10, We = 20, me = 7, ce = 16711680, Ye = 16733525, Ue = 16711680, $e = 3, ne = 999, ve = !1;
+const Ve = 40, ze = 10, We = 20, pe = 7, ce = 16711680, Ye = 16733525, Ue = 16711680, $e = 3, ne = 999, me = !1;
 class Xe {
   constructor(e, t, n) {
     d(this, "viewer");
@@ -801,16 +801,16 @@ class Xe {
     if (this.points.length <= 1) return;
     const t = new a.BufferGeometry().setFromPoints(this.points.slice(1)), n = new a.PointsMaterial({
       color: ce,
-      size: me,
-      sizeAttenuation: ve
+      size: pe,
+      sizeAttenuation: me
     });
     this.pointsMesh = new a.Points(t, n), this.pointsMesh.renderOrder = ne, e.add(this.pointsMesh);
   }
   drawStartPoint(e) {
     const t = this.isHoveringNearStart ? Ye : ce, n = new a.BufferGeometry().setFromPoints([this.points[0]]), i = new a.PointsMaterial({
       color: t,
-      size: me,
-      sizeAttenuation: ve
+      size: pe,
+      sizeAttenuation: me
     });
     this.startPointMesh = new a.Points(n, i), this.startPointMesh.renderOrder = ne, e.add(this.startPointMesh);
   }
@@ -861,8 +861,8 @@ class Xe {
     this.completedPolygonLine && e.remove(this.completedPolygonLine), this.completedPointsMesh && e.remove(this.completedPointsMesh);
     const t = new a.BufferGeometry().setFromPoints(this.points), n = new a.PointsMaterial({
       color: ce,
-      size: me,
-      sizeAttenuation: ve
+      size: pe,
+      sizeAttenuation: me
     });
     this.completedPointsMesh = new a.Points(t, n), this.completedPointsMesh.renderOrder = ne, this.completedPointsMesh.name = "completed-polygon-points", e.add(this.completedPointsMesh);
     const i = new a.BufferGeometry().setFromPoints(this.points), s = new a.LineBasicMaterial({
@@ -888,8 +888,8 @@ class Xe {
   isPointInPolygon(e) {
     let t = !1;
     for (let n = 0, i = this.points.length - 1; n < this.points.length; i = n++) {
-      const s = this.points[n].x, o = this.points[n].y, l = this.points[i].x, m = this.points[i].y;
-      o > e.y != m > e.y && e.x < (l - s) * (e.y - o) / (m - o) + s && (t = !t);
+      const s = this.points[n].x, o = this.points[n].y, l = this.points[i].x, p = this.points[i].y;
+      o > e.y != p > e.y && e.x < (l - s) * (e.y - o) / (p - o) + s && (t = !t);
     }
     return t;
   }
@@ -934,10 +934,10 @@ const Je = Oe(
     children: s,
     iconNode: o,
     ...l
-  }, m) => pe(
+  }, p) => ve(
     "svg",
     {
-      ref: m,
+      ref: p,
       ...Ze,
       width: e,
       height: e,
@@ -947,7 +947,7 @@ const Je = Oe(
       ...l
     },
     [
-      ...o.map(([b, P]) => pe(b, P)),
+      ...o.map(([b, P]) => ve(b, P)),
       ...Array.isArray(s) ? s : [s]
     ]
   )
@@ -960,7 +960,7 @@ const Je = Oe(
  */
 const fe = (c, e) => {
   const t = Oe(
-    ({ className: n, ...i }, s) => pe(Je, {
+    ({ className: n, ...i }, s) => ve(Je, {
       ref: s,
       iconNode: e,
       className: _e(`lucide-${qe(c)}`, n),
@@ -985,8 +985,23 @@ const Ke = fe("RotateCcw", [
  * This source code is licensed under the ISC license.
  * See the LICENSE file in the root directory of this source tree.
  */
-const Qe = fe("Square", [
-  ["rect", { width: "18", height: "18", x: "3", y: "3", rx: "2", key: "afitv7" }]
+const Qe = fe("SquareDashedMousePointer", [
+  [
+    "path",
+    {
+      d: "M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z",
+      key: "xwnzip"
+    }
+  ],
+  ["path", { d: "M5 3a2 2 0 0 0-2 2", key: "y57alp" }],
+  ["path", { d: "M19 3a2 2 0 0 1 2 2", key: "18rm91" }],
+  ["path", { d: "M5 21a2 2 0 0 1-2-2", key: "sbafld" }],
+  ["path", { d: "M9 3h1", key: "1yesri" }],
+  ["path", { d: "M9 21h2", key: "1qve2z" }],
+  ["path", { d: "M14 3h1", key: "1ec4yj" }],
+  ["path", { d: "M3 9v1", key: "1r0deq" }],
+  ["path", { d: "M21 9v2", key: "p14lih" }],
+  ["path", { d: "M3 14v1", key: "vnatye" }]
 ]);
 /**
  * @license lucide-react v0.469.0 - ISC
@@ -1039,13 +1054,13 @@ function rt({
   selectedHandles: s = [],
   visibleHandles: o = null,
   filteredHandles: l = null,
-  interactiveHandles: m = null,
+  interactiveHandles: p = null,
   isPolygonMode: b = !1,
   // Outputs
   onLoad: P,
-  onError: T,
-  onSelectionChange: S,
-  onPolygonModeChange: M,
+  onError: k,
+  onSelectionChange: C,
+  onPolygonModeChange: S,
   // Options
   showToolbar: j = !0,
   enablePolygonSelection: O = !0,
@@ -1053,9 +1068,9 @@ function rt({
   enableZoomOnSelect: A = !0
 }) {
   const G = Re(
-    () => m ?? o,
-    [m, o]
-  ), E = he(S), v = he(M), N = he(P), F = he(T), W = ie(null), D = ie(null), w = ie(null), I = ie(null), Y = ie(!1), [B, V] = se(!1), [Q, z] = se(!0), [le, ee] = se("Initializing..."), [U, q] = se(null), [$, r] = se(null);
+    () => p ?? o,
+    [p, o]
+  ), E = he(C), m = he(S), N = he(P), F = he(k), W = ie(null), D = ie(null), w = ie(null), I = ie(null), Y = ie(!1), [B, V] = se(!1), [Q, z] = se(!0), [le, ee] = se("Initializing..."), [U, q] = se(null), [$, r] = se(null);
   K(() => {
     V(b);
   }, [b]), K(() => {
@@ -1084,59 +1099,59 @@ function rt({
         antialias: !0,
         colorCorrection: !0,
         blackWhiteInversion: !0
-      }, p = new $(W.current, u);
-      if (!p.HasRenderer())
+      }, v = new $(W.current, u);
+      if (!v.HasRenderer())
         throw new Error("WebGL not available. Please check your browser supports WebGL.");
-      return D.current = p, p.Subscribe("loaded", () => {
-        var C;
+      return D.current = v, v.Subscribe("loaded", () => {
+        var M;
         console.log("DXF loaded successfully");
-        const y = p.GetBounds();
-        if (y) {
-          const H = p.GetOrigin();
-          p.FitView(
-            y.minX - H.x,
-            y.maxX - H.x,
-            y.minY - H.y,
-            y.maxY - H.y,
+        const g = v.GetBounds();
+        if (g) {
+          const H = v.GetOrigin();
+          v.FitView(
+            g.minX - H.x,
+            g.maxX - H.x,
+            g.minY - H.y,
+            g.maxY - H.y,
             0.1
           );
         }
-        p.Render(), z(!1), (C = N.current) == null || C.call(N);
-      }), p.Subscribe("message", (y) => {
-        const { message: C, level: H } = y.detail;
-        H === "error" ? console.error("[DxfViewer]", C) : H === "warn" && console.warn("[DxfViewer]", C);
-      }), p;
+        v.Render(), z(!1), (M = N.current) == null || M.call(N);
+      }), v.Subscribe("message", (g) => {
+        const { message: M, level: H } = g.detail;
+        H === "error" ? console.error("[DxfViewer]", M) : H === "warn" && console.warn("[DxfViewer]", M);
+      }), v;
     } catch (u) {
-      const p = u instanceof Error ? u : new Error(String(u));
-      return q(p), z(!1), (h = F.current) == null || h.call(F, p), null;
+      const v = u instanceof Error ? u : new Error(String(u));
+      return q(v), z(!1), (h = F.current) == null || h.call(F, v), null;
     }
-  }, [$, N, F]), g = J(
+  }, [$, N, F]), y = J(
     async (h, u) => {
-      var p;
+      var v;
       z(!0), q(null), ee("Loading...");
       try {
-        let y;
+        let g;
         if (typeof u == "string")
-          y = u;
+          g = u;
         else {
-          const C = new Blob([u], { type: "application/octet-stream" });
-          y = URL.createObjectURL(C);
+          const M = new Blob([u], { type: "application/octet-stream" });
+          g = URL.createObjectURL(M);
         }
         await h.Load({
-          url: y,
+          url: g,
           fonts: n ?? null,
-          progressCbk: (C, H, ge) => {
-            let te = C;
-            if (C === "fetch" ? te = "Downloading..." : C === "parse" ? te = "Parsing DXF..." : C === "prepare" ? te = "Preparing scene..." : C === "font" && (te = "Loading fonts..."), ge && H) {
-              const Ee = Math.round(H / ge * 100);
+          progressCbk: (M, H, ye) => {
+            let te = M;
+            if (M === "fetch" ? te = "Downloading..." : M === "parse" ? te = "Parsing DXF..." : M === "prepare" ? te = "Preparing scene..." : M === "font" && (te = "Loading fonts..."), ye && H) {
+              const Ee = Math.round(H / ye * 100);
               ee(`${te} ${Ee}%`);
             } else
               ee(te);
           }
-        }), typeof u != "string" && URL.revokeObjectURL(y);
-      } catch (y) {
-        const C = y instanceof Error ? y : new Error(String(y));
-        console.error("Failed to load DXF:", C), q(C), z(!1), (p = F.current) == null || p.call(F, C);
+        }), typeof u != "string" && URL.revokeObjectURL(g);
+      } catch (g) {
+        const M = g instanceof Error ? g : new Error(String(g));
+        console.error("Failed to load DXF:", M), q(M), z(!1), (v = F.current) == null || v.call(F, M);
       }
     },
     [n, F]
@@ -1146,30 +1161,30 @@ function rt({
     const h = f();
     if (h)
       return R && (w.current = new Be(h, (u) => {
-        var p, y;
-        V(!1), (p = v.current) == null || p.call(v, !1), Y.current = !1, (y = E.current) == null || y.call(E, [u]);
+        var v, g;
+        V(!1), (v = m.current) == null || v.call(m, !1), Y.current = !1, (g = E.current) == null || g.call(E, [u]);
       })), O && (I.current = new Xe(
         h,
         (u) => {
-          var p, y;
-          V(!1), (p = v.current) == null || p.call(v, !1), Y.current = !0, (y = E.current) == null || y.call(E, u, { isPolygonSelection: !0 });
+          var v, g;
+          V(!1), (v = m.current) == null || v.call(m, !1), Y.current = !0, (g = E.current) == null || g.call(E, u, { isPolygonSelection: !0 });
         },
         () => {
           var u;
-          V(!1), (u = v.current) == null || u.call(v, !1);
+          V(!1), (u = m.current) == null || u.call(m, !1);
         }
-      )), c ? g(h, c) : e && g(h, e), () => {
-        var u, p;
-        if ((u = w.current) == null || u.destroy(), w.current = null, (p = I.current) == null || p.deactivate(), I.current = null, D.current) {
+      )), c ? y(h, c) : e && y(h, e), () => {
+        var u, v;
+        if ((u = w.current) == null || u.destroy(), w.current = null, (v = I.current) == null || v.deactivate(), I.current = null, D.current) {
           try {
             D.current.Destroy();
-          } catch (y) {
-            console.warn("Error destroying viewer:", y);
+          } catch (g) {
+            console.warn("Error destroying viewer:", g);
           }
           D.current = null;
         }
       };
-  }, [$, c, e, f, g, R, O, E, v]), K(() => {
+  }, [$, c, e, f, y, R, O, E, m]), K(() => {
     !w.current || !I.current || (B ? (w.current.setEnabled(!1), I.current.activate()) : (I.current.deactivate(), w.current.setEnabled(!0), s.length > 0 && !Y.current && w.current.selectHandles(s, [], A)));
   }, [B, s, A]), K(() => {
     if (!w.current || Q || U) return;
@@ -1177,8 +1192,8 @@ function rt({
     Y.current = !1;
     const u = o || [];
     if (s.length > 0) {
-      const p = s.length === 1, y = A && (p || !h);
-      w.current.selectHandles(s, u, y);
+      const v = s.length === 1, g = A && (v || !h);
+      w.current.selectHandles(s, u, g);
     } else l && l.length > 0 ? w.current.highlightHandles(l) : w.current.selectHandles([], u, !1);
   }, [s, o, l, Q, U, A]), K(() => {
     w.current && w.current.setValidHandles(G);
@@ -1186,25 +1201,25 @@ function rt({
   const L = J(() => {
     var u;
     const h = !B;
-    V(h), (u = v.current) == null || u.call(v, h);
-  }, [B, v]), Z = J(() => {
+    V(h), (u = m.current) == null || u.call(m, h);
+  }, [B, m]), Z = J(() => {
     const h = D.current;
     if (!h) return;
     const u = h.GetBounds();
     if (u) {
-      const p = h.GetOrigin();
+      const v = h.GetOrigin();
       h.FitView(
-        u.minX - p.x,
-        u.maxX - p.x,
-        u.minY - p.y,
-        u.maxY - p.y,
+        u.minX - v.x,
+        u.maxX - v.x,
+        u.minY - v.y,
+        u.maxY - v.y,
         0.1
       ), h.Render();
     }
   }, []), re = J(() => {
     var h, u;
-    V(!1), (h = v.current) == null || h.call(v, !1), w.current && w.current.clearHighlights(), I.current && (I.current.clearCompletedPolygon(), I.current.clearInProgressPolygon()), Y.current = !1, (u = E.current) == null || u.call(E, [], { isReset: !0 }), Z();
-  }, [Z, E, v]), _ = J(() => {
+    V(!1), (h = m.current) == null || h.call(m, !1), w.current && w.current.clearHighlights(), I.current && (I.current.clearCompletedPolygon(), I.current.clearInProgressPolygon()), Y.current = !1, (u = E.current) == null || u.call(E, [], { isReset: !0 }), Z();
+  }, [Z, E, m]), _ = J(() => {
     const h = D.current;
     if (!h) return;
     const u = h.GetCamera();

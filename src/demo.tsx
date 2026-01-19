@@ -65,6 +65,7 @@ function App() {
             showToolbar={true}
             enablePolygonSelection={true}
             enableInteraction={true}
+            interactiveHandles={[]}
           />
         ) : (
           <div className="empty-state">
