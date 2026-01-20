@@ -28,6 +28,10 @@ const codes = new Map([
     [75, "DIMSE1"],
     [76, "DIMSE2"],
     [78, "DIMZIN"],
+    // Handle-based arrowhead block references (used in newer DXF versions)
+    [340, "DIMBLK_HANDLE"],  // Handle to DIMBLK block
+    [343, "DIMBLK1_HANDLE"], // Handle to DIMBLK1 block
+    [344, "DIMBLK2_HANDLE"], // Handle to DIMBLK2 block
 ])
 
 export default codes

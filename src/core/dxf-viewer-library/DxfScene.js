@@ -64,6 +64,9 @@ const DEFAULT_VARS = {
     DIMSOXD: false,
     DIMTSZ: 0,
     DIMZIN: 8, //XXX 0 for imperial,
+    DIMBLK: null, // Default arrowhead block (null = _ClosedFilled)
+    DIMBLK1: null, // Arrowhead block for first end (when DIMSAH is set)
+    DIMBLK2: null, // Arrowhead block for second end (when DIMSAH is set)
 }
 
 /** This class prepares an internal representation of a DXF file, optimized fo WebGL rendering. It

@@ -1,15 +1,7 @@
 import { Vector2, Matrix3 } from "three";
 import { ParseSpecialChars } from "./TextRenderer.js";
 import { DimensionLayout } from "./LinearDimension.js";
-
-const arrowHeadShape = {
-    vertices: [
-        new Vector2(0, 0),
-        new Vector2(1, -0.25),
-        new Vector2(1, 0.25)
-    ],
-    indices: [0, 1, 2]
-};
+import { getArrowheadShape } from "./ArrowheadShapes.js";
 
 /**
  * @typedef AngularDimensionParams
@@ -78,11 +70,26 @@ export class AngularDimension {
         const arcLength = this.radius * Math.abs(this.arcAngle);
         const flipArrows = arcLength < arrowSize * 2;
 
+        /* Get arrowhead block names from dimension style.
+         * DIMSAH: If true, use separate arrowheads (DIMBLK1 and DIMBLK2) for each end.
+         * DIMBLK: Default arrowhead block for both ends when DIMSAH is false.
+         * DIMBLK1: Arrowhead block for first end when DIMSAH is true.
+         * DIMBLK2: Arrowhead block for second end when DIMSAH is true.
+         */
+        const useSeparateArrows = this.styleResolver("DIMSAH") ?? 0;
+        const defaultBlock = this.styleResolver("DIMBLK");
+        const block1 = useSeparateArrows ? (this.styleResolver("DIMBLK1") ?? defaultBlock) : defaultBlock;
+        const block2 = useSeparateArrows ? (this.styleResolver("DIMBLK2") ?? defaultBlock) : defaultBlock;
+
         for (let i = 0; i < 2; i++) {
             const isStart = i === 0;
             const arcPt = isStart ? this.arcStart : this.arcEnd;
             const tangentAngle = isStart ? this.startAngle : this.endAngle;
             
+            // Get the appropriate arrowhead block for this end
+            const arrowBlock = isStart ? block1 : block2;
+            const arrowShape = getArrowheadShape(arrowBlock);
+
             let arrowAngle;
             if (isStart) {
                 arrowAngle = this.arcAngle > 0 
@@ -111,7 +118,7 @@ export class AngularDimension {
             if (tickSize > 0) {
                 this._CreateTick(result, transform, dimColor);
             } else {
-                this._CreateArrowShape(result, transform, dimColor);
+                this._CreateArrowShape(result, transform, dimColor, arrowShape);
             }
         }
 
@@ -267,12 +274,36 @@ export class AngularDimension {
         return lines;
     }
 
-    _CreateArrowShape(layout, transform, color) {
-        const vertices = [];
-        for (const v of arrowHeadShape.vertices) {
-            vertices.push(v.clone().applyMatrix3(transform));
+    /**
+     * Create arrowhead shape based on the arrowhead definition.
+     * @param {DimensionLayout} layout The layout to add the shape to
+     * @param {Matrix3} transform The transformation matrix
+     * @param {number} color The color for the shape
+     * @param {Object} arrowShape The arrowhead shape definition
+     */
+    _CreateArrowShape(layout, transform, color, arrowShape) {
+        if (arrowShape.type === 'NONE') {
+            // No arrowhead
+            return;
         }
-        layout.AddTriangles(vertices, arrowHeadShape.indices, color);
+
+        if (arrowShape.type === 'LINES') {
+            // Line-based arrowhead (e.g., _Open, _Closed outline)
+            if (arrowShape.lineSegments) {
+                for (const segment of arrowShape.lineSegments) {
+                    const start = arrowShape.vertices[segment[0]].clone().applyMatrix3(transform);
+                    const end = arrowShape.vertices[segment[1]].clone().applyMatrix3(transform);
+                    layout.AddLine(start, end, color);
+                }
+            }
+        } else {
+            // Triangle-based arrowhead (filled)
+            const vertices = [];
+            for (const v of arrowShape.vertices) {
+                vertices.push(v.clone().applyMatrix3(transform));
+            }
+            layout.AddTriangles(vertices, arrowShape.indices, color);
+        }
     }
 
     _CreateTick(layout, transform, color) {
