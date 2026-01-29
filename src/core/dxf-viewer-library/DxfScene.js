@@ -178,7 +178,12 @@ export class DxfScene {
                     if (!this._FilterEntity(entity)) {
                         continue
                     }
-                    this._ProcessDxfEntity(entity, blockCtx)
+                    // Store ATTDEF entities for later attribute matching
+                    if (entity.type === "ATTDEF") {
+                        this._DecomposeAttdef(entity, block)
+                    } else {
+                        this._ProcessDxfEntity(entity, blockCtx)
+                    }
                 }
             }
             if (block.SetFlatten()) {
@@ -339,6 +344,10 @@ export class DxfScene {
             renderEntities = this._DecomposeDimension(entity, blockCtx)
             break
         case "ATTRIB":
+            // Skip ATTRIB entities that belong to INSERT entities - they're processed in _ProcessInsert
+            if (entity.ownerHandle && this.inserts.has(entity.ownerHandle)) {
+                return
+            }
             renderEntities = this._DecomposeAttribute(entity, blockCtx)
             break
         case "HATCH":
@@ -661,6 +670,107 @@ export class DxfScene {
             vertices, layer, color,
             lineType: null
         })
+    }
+
+    /**
+     * Store ATTDEF entity in block definition for later attribute matching.
+     * @param entity {ATTDEF} Attribute definition entity.
+     * @param block {Block} Block to store the ATTDEF in.
+     */
+    _DecomposeAttdef(entity, block) {
+        if (entity.tag) {
+            // Store ATTDEF indexed by tag name for matching with ATTRIB entities
+            block.attdefs.set(entity.tag, entity)
+        }
+    }
+
+    /**
+     * Process ATTRIB entities attached to an INSERT entity.
+     * Matches ATTRIB entities to ATTDEF definitions, applies transforms, and renders text.
+     * @param insertEntity {INSERT} The INSERT entity.
+     * @param block {Block} The block definition containing ATTDEF entities.
+     * @param attribs {ATTRIB[]} Array of ATTRIB entities attached to the INSERT.
+     * @param transform {Matrix3} Transform matrix for the INSERT.
+     * @param layer {string} Layer name for the attributes.
+     * @param color {number} Color for the attributes.
+     */
+    _ProcessInsertAttributes(insertEntity, block, attribs, transform, layer, color) {
+        if (!this.textRenderer.canRender) {
+            return
+        }
+
+        for (const attrib of attribs) {
+            // Match ATTRIB to ATTDEF by tag name
+            const attdef = attrib.tag ? block.attdefs.get(attrib.tag) : null
+
+            // Check visibility: ATTRIB hidden flag takes precedence, then ATTDEF hidden flag
+            const isHidden = attrib.hidden || (attdef && attdef.hidden)
+            if (isHidden) {
+                continue
+            }
+
+            // Merge properties: ATTRIB values override ATTDEF defaults
+            const text = attrib.text ?? (attdef?.text ?? "")
+            const textHeight = attrib.textHeight ?? attdef?.textHeight ?? 1
+            const scale = attrib.scale ?? attdef?.scale ?? 1
+            const fontSize = textHeight * scale
+            const rotation = attrib.rotation ?? attdef?.rotation ?? 0
+            const hAlign = attrib.horizontalJustification ?? attdef?.horizontalJustification ?? 0
+            const vAlign = attrib.verticalJustification ?? attdef?.verticalJustification ?? 0
+            const textStyle = attrib.textStyle ?? attdef?.textStyle ?? "STANDARD"
+
+            // Get position from ATTRIB or ATTDEF
+            // Note: ATTRIB positions in DXF are already in world coordinates (pre-transformed),
+            // so we should NOT apply the INSERT transform again.
+            // Only apply transform if we're falling back to ATTDEF position (block-local coords).
+            let startPos = attrib.startPoint
+            let endPos = attrib.endPoint
+            let needsTransform = false
+
+            if (!startPos && attdef?.startPoint) {
+                // Fall back to ATTDEF position (in block-local coordinates)
+                startPos = attdef.startPoint
+                endPos = attdef.endPoint
+                needsTransform = true
+            }
+
+            if (!startPos) {
+                // No position defined, skip this attribute
+                continue
+            }
+
+            // Only apply INSERT transform if using ATTDEF position (block-local coordinates)
+            const transformedStart = needsTransform
+                ? new Vector2(startPos.x, startPos.y).applyMatrix3(transform)
+                : new Vector2(startPos.x, startPos.y)
+            const transformedEnd = endPos
+                ? (needsTransform ? new Vector2(endPos.x, endPos.y).applyMatrix3(transform) : new Vector2(endPos.x, endPos.y))
+                : transformedStart
+
+            // Get layer and color from ATTRIB or INSERT
+            const attribLayer = this._GetEntityLayer(attrib, null) ?? layer
+            const attribColor = this._GetEntityColor(attrib, null) ?? color
+
+            // Generate text entities using TextRenderer
+            const renderEntities = this.textRenderer.Render({
+                text: ParseSpecialChars(text),
+                fontSize,
+                startPos: transformedStart,
+                endPos: transformedEnd,
+                rotation,
+                hAlign,
+                vAlign,
+                color: attribColor,
+                layer: attribLayer
+            })
+
+            // Process rendered text entities through the standard pipeline
+            for (const renderEntity of renderEntities) {
+                renderEntity.dxfType = "ATTRIB"
+                renderEntity.dxfHandle = attrib.handle
+                this._ProcessEntity(renderEntity, null)
+            }
+        }
     }
 
     *_DecomposeAttribute(entity, blockCtx) {
@@ -1601,6 +1711,12 @@ export class DxfScene {
                                         color, lineType, entity.handle, entity.type)
             const batch = this._GetBatch(key)
             batch.PushInstanceTransform(transform)
+        }
+
+        // Process ATTRIB entities attached to this INSERT (parsed by INSERT parser)
+        const attribs = entity.attribs || []
+        if (attribs.length > 0) {
+            this._ProcessInsertAttributes(entity, block, attribs, transform, layer, color)
         }
     }
 
@@ -2548,6 +2664,8 @@ class Block {
         this.flatten = false
         /** Bounds in block coordinates (with offset applied). */
         this.bounds = null
+        /** Map of ATTDEF entities indexed by tag name. Used for attribute definition lookup. */
+        this.attdefs = new Map()
     }
 
     /** Set block flattening flag based on usage statistics.

@@ -2,6 +2,19 @@ import React, { useState, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DxfViewer } from './index';
 
+// Test files for quick loading
+const TEST_FILES = [
+  { name: 'block-attributes-simple.dxf', path: '/tests/block-attributes-simple.dxf' },
+  { name: 'block-attributes-multiple.dxf', path: '/tests/block-attributes-multiple.dxf' },
+  { name: 'block-attributes-invisible.dxf', path: '/tests/block-attributes-invisible.dxf' },
+  { name: 't-6.dxf', path: '/tests/t-6.dxf' },
+];
+
+// Font for text rendering (using Google Fonts CDN)
+const FONTS = [
+  'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf'
+];
+
 function App() {
   const [file, setFile] = useState<ArrayBuffer | null>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -18,6 +31,18 @@ function App() {
       setFile(arrayBuffer);
     };
     reader.readAsArrayBuffer(selectedFile);
+  }, []);
+
+  const loadTestFile = useCallback(async (testFile: { name: string; path: string }) => {
+    try {
+      const response = await fetch(testFile.path);
+      if (!response.ok) throw new Error(`Failed to load ${testFile.name}`);
+      const arrayBuffer = await response.arrayBuffer();
+      setFileName(testFile.name);
+      setFile(arrayBuffer);
+    } catch (error) {
+      console.error('Error loading test file:', error);
+    }
   }, []);
 
   const handleSelectionChange = useCallback((handles: string[], options?: { isReset?: boolean }) => {
@@ -46,6 +71,23 @@ function App() {
           accept=".dxf" 
           onChange={handleFileChange}
         />
+        {TEST_FILES.map((testFile) => (
+          <button
+            key={testFile.name}
+            onClick={() => loadTestFile(testFile)}
+            style={{
+              background: 'rgba(77, 168, 218, 0.2)',
+              border: '1px solid rgba(77, 168, 218, 0.5)',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              color: '#fff',
+              cursor: 'pointer',
+              fontSize: '12px',
+            }}
+          >
+            {testFile.name}
+          </button>
+        ))}
         {fileName && <span style={{ opacity: 0.7 }}>{fileName}</span>}
         {selectedHandles.length > 0 && (
           <span style={{ opacity: 0.7, marginLeft: 'auto' }}>
@@ -58,6 +100,7 @@ function App() {
           <DxfViewer
             file={file}
             fileName={fileName}
+            fonts={FONTS}
             selectedHandles={selectedHandles}
             onSelectionChange={handleSelectionChange}
             onLoad={handleLoad}
