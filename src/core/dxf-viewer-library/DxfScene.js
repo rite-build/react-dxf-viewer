@@ -122,6 +122,7 @@ export class DxfScene {
         this.angDir = this.vars.get("ANGDIR") ?? 0
         this.pdMode = this.vars.get("PDMODE") ?? 0
         this.pdSize = this.vars.get("PDSIZE") ?? 0
+        this.attMode = this.vars.get("ATTMODE") ?? 1
         this.isMetric = (this.vars.get("MEASUREMENT") ?? 1) == 1
 
         if(dxf.tables && dxf.tables.layer) {
@@ -211,8 +212,14 @@ export class DxfScene {
 
     /** @return False to suppress the specified entity, true to permit rendering. */
     _FilterEntity(entity) {
-        if (entity.hidden) {
+        if (entity.type === 'ATTRIB' && this.attMode === 0) {
             return false
+        }
+        if (entity.hidden) {
+            // Respect ATTMODE = 2 (On) for ATTRIB entities by ignoring hidden flag
+            if (!(this.attMode === 2 && entity.type === 'ATTRIB')) {
+                return false
+            }
         }
         const layerName = this._GetEntityLayer(entity)
         if (layerName != "0") {
@@ -234,11 +241,11 @@ export class DxfScene {
 
         const ProcessEntity = async (entity) => {
             if (!this._FilterEntity(entity)) {
-                return
+                return true
             }
             let ret
             if (entity.type === "TEXT" || entity.type === "ATTRIB" || entity.type === "ATTDEF") {
-                ret = await this.textRenderer.FetchFonts(ParseSpecialChars(entity.text))
+                ret = await this.textRenderer.FetchFonts(ParseSpecialChars(entity.text || ""))
 
             } else if (entity.type === "MTEXT") {
                 const parser = new MTextFormatParser()
@@ -284,6 +291,12 @@ export class DxfScene {
                      */
                     return
                 }
+            } else if (entity.type === "INSERT" && entity.attribs) {
+                for (const attrib of entity.attribs) {
+                    if (!await ProcessEntity(attrib)) {
+                        return
+                    }
+                }
             }
         }
         for (const block of this.blocks.values()) {
@@ -292,6 +305,12 @@ export class DxfScene {
                     if (IsTextEntity(entity)) {
                         if (!await ProcessEntity(entity)) {
                             return
+                        }
+                    } else if (entity.type === "INSERT" && entity.attribs) {
+                        for (const attrib of entity.attribs) {
+                            if (!await ProcessEntity(attrib)) {
+                                return
+                            }
                         }
                     }
                 }
@@ -705,7 +724,10 @@ export class DxfScene {
 
             // Check visibility: ATTRIB hidden flag takes precedence, then ATTDEF hidden flag
             const isHidden = attrib.hidden || (attdef && attdef.hidden)
-            if (isHidden) {
+            
+            if (this.attMode === 0) continue;
+            
+            if (isHidden && this.attMode !== 2) {
                 continue
             }
 

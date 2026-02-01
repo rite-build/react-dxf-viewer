@@ -250,7 +250,6 @@ export function DxfViewer({
       // Subscribe to events (use refs to avoid stale closures)
       viewer.Subscribe("loaded", () => {
         console.log("DXF loaded successfully");
-        console.log("yarinnnnnnnnnnnnnnnnnnnn");
         
         // Fit to view
         const bounds = viewer.GetBounds();
