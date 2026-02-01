@@ -6,6 +6,14 @@ export default function EntityParser() {}
 
 EntityParser.ForEntityName = 'INSERT';
 
+let _sharedAttribParser = null;
+function getAttribParser() {
+    if (!_sharedAttribParser) {
+        _sharedAttribParser = new AttribParser();
+    }
+    return _sharedAttribParser;
+}
+
 EntityParser.prototype.parseEntity = function(scanner, curr) {
     var entity;
     entity = { type: curr.value };
@@ -62,7 +70,7 @@ EntityParser.prototype.parseEntity = function(scanner, curr) {
     // Parse ATTRIB entities that follow the INSERT (if attributes-follow flag is set)
     if (hasAttributes && curr.code === 0) {
         entity.attribs = [];
-        var attribParser = new AttribParser();
+        var attribParser = getAttribParser();
         
         while (curr !== 'EOF' && curr.code === 0) {
             if (curr.value === 'ATTRIB') {

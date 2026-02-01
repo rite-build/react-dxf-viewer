@@ -204,6 +204,39 @@ export class TextRenderer {
     }
 
     /**
+     * Render a text string as a SINGLE merged Entity instead of one Entity per glyph.
+     * This significantly reduces CPU overhead for text-heavy drawings.
+     * 
+     * @param {string} text
+     * @param {{x,y}} startPos
+     * @param {?{x,y}} endPos TEXT group second alignment point.
+     * @param {?number} rotation Rotation attribute, deg.
+     * @param {?number} widthFactor Relative X scale factor (group 41)
+     * @param {?number} hAlign Horizontal text justification type code (group 72)
+     * @param {?number} vAlign Vertical text justification type code (group 73).
+     * @param {number} color
+     * @param {?string} layer
+     * @param {number} fontSize Font size.
+     * @return {?Entity} Single Entity containing merged geometry, or null if text is empty/invisible.
+     */
+    RenderMerged({text, startPos, endPos, rotation = 0, widthFactor = 1, hAlign = 0, vAlign = 0,
+                  color, layer = null, fontSize}) {
+        
+        // Build the text block (same as Render)
+        const block = new TextBlock(fontSize)
+        for (const char of text) {
+            const shape = this._GetCharShape(char)
+            if (!shape) {
+                continue
+            }
+            block.PushChar(char, shape)
+        }
+        
+        // Use the new merged render method on TextBlock
+        return block.RenderMerged(startPos, endPos, rotation, widthFactor, hAlign, vAlign, color, layer)
+    }
+
+    /**
      * @param {MTextFormatEntity[]} formattedText Parsed formatted text.
      * @param {{x, y}} position Insertion position.
      * @param {?number} fontSize If not specified, then it still may be defined by inline
@@ -1074,5 +1107,140 @@ class TextBlock {
                })
             }
         }
+    }
+
+    /**
+     * Render all glyphs as a single merged Entity.
+     * @param startPos {{x,y}} TEXT group first alignment point.
+     * @param endPos {?{x,y}} TEXT group second alignment point.
+     * @param rotation {?number} Rotation attribute, deg.
+     * @param widthFactor {?number} Relative X scale factor (group 41).
+     * @param hAlign {?number} Horizontal text justification type code (group 72).
+     * @param vAlign {?number} Vertical text justification type code (group 73).
+     * @param color {number}
+     * @param layer {?string}
+     * @return {?Entity} Single merged Entity, or null if no geometry.
+     */
+    RenderMerged(startPos, endPos, rotation, widthFactor, hAlign, vAlign, color, layer) {
+        if (this.bounds === null) {
+            return null
+        }
+
+        // === Same alignment/transform logic as Render() ===
+        endPos = endPos ?? startPos
+        if (rotation) {
+            rotation *= -Math.PI / 180
+        } else {
+            rotation = 0
+        }
+        widthFactor = widthFactor ?? 1
+        hAlign = hAlign ?? HAlign.LEFT
+        vAlign = vAlign ?? VAlign.BASELINE
+
+        let origin = new Vector2()
+        let scale = new Vector2(widthFactor, 1)
+        let insertionPos =
+            (hAlign === HAlign.LEFT && vAlign === VAlign.BASELINE) ||
+            hAlign === HAlign.FIT || hAlign === HAlign.ALIGNED ?
+            new Vector2(startPos.x, startPos.y) : new Vector2(endPos.x, endPos.y)
+
+        const GetFitScale = () => {
+            const width = endPos.x - startPos.x
+            if (width < Number.MIN_VALUE * 2) {
+                return widthFactor
+            }
+            return width / (this.bounds.xMax - this.bounds.xMin)
+        }
+
+        const GetFitRotation = () => {
+            return -Math.atan2(endPos.y - startPos.y, endPos.x - startPos.x)
+        }
+
+        switch (hAlign) {
+        case HAlign.LEFT:
+            origin.x = this.bounds.xMin
+            break
+        case HAlign.CENTER:
+            origin.x = (this.bounds.xMax - this.bounds.xMin) / 2
+            break
+        case HAlign.RIGHT:
+            origin.x = this.bounds.xMax
+            break
+        case HAlign.MIDDLE:
+            origin.x = (this.bounds.xMax - this.bounds.xMin) / 2
+            origin.y = (this.bounds.yMax - this.bounds.yMin) / 2
+            break
+        case HAlign.ALIGNED: {
+            const f = GetFitScale()
+            scale.x = f
+            scale.y = f
+            rotation = GetFitRotation()
+            break
+        }
+        case HAlign.FIT:
+            scale.x = GetFitScale()
+            rotation = GetFitRotation()
+            break
+        default:
+            console.warn("Unrecognized hAlign value: " + hAlign)
+        }
+
+        switch (vAlign) {
+        case VAlign.BASELINE:
+            break
+        case VAlign.BOTTOM:
+            origin.y = this.bounds.yMin
+            break
+        case VAlign.MIDDLE:
+            origin.y = (this.bounds.yMax - this.bounds.yMin) / 2
+            break
+        case VAlign.TOP:
+            origin.y = this.bounds.yMax
+            break
+        default:
+            console.warn("Unrecognized vAlign value: " + vAlign)
+        }
+
+        const transform = new Matrix3().translate(-origin.x, -origin.y).scale(scale.x, scale.y)
+            .rotate(rotation).translate(insertionPos.x, insertionPos.y)
+
+        // === MERGED GEOMETRY COLLECTION ===
+        const mergedVertices = []
+        const mergedIndices = []
+        let vertexOffset = 0  // Tracks position in merged vertex array
+
+        for (const glyph of this.glyphs) {
+            if (glyph.vertices && glyph.vertices.length > 0) {
+                // Transform and add vertices
+                for (const v of glyph.vertices) {
+                    v.applyMatrix3(transform)
+                    mergedVertices.push(v)
+                }
+                
+                // Add indices with offset adjustment
+                // glyph.shape.indices reference positions 0, 1, 2... in the glyph's local vertex array
+                // We need to offset them to point to the correct position in mergedVertices
+                for (const idx of glyph.shape.indices) {
+                    mergedIndices.push(vertexOffset + idx)
+                }
+                
+                // Update offset for next glyph
+                vertexOffset += glyph.vertices.length
+            }
+        }
+
+        // Return null if no geometry was generated
+        if (mergedVertices.length === 0) {
+            return null
+        }
+
+        // Return single merged entity
+        return new Entity({
+            type: Entity.Type.TRIANGLES,
+            vertices: mergedVertices,
+            indices: mergedIndices,
+            layer,
+            color
+        })
     }
 }

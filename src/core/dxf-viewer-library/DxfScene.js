@@ -774,7 +774,8 @@ export class DxfScene {
             const attribColor = this._GetEntityColor(attrib, null) ?? color
 
             // Generate text entities using TextRenderer
-            const renderEntities = this.textRenderer.Render({
+            // OPTIMIZATION: Use merged rendering - single Entity per attribute text
+            const mergedEntity = this.textRenderer.RenderMerged({
                 text: ParseSpecialChars(text),
                 fontSize,
                 startPos: transformedStart,
@@ -786,11 +787,10 @@ export class DxfScene {
                 layer: attribLayer
             })
 
-            // Process rendered text entities through the standard pipeline
-            for (const renderEntity of renderEntities) {
-                renderEntity.dxfType = "ATTRIB"
-                renderEntity.dxfHandle = attrib.handle
-                this._ProcessEntity(renderEntity, null)
+            if (mergedEntity) {
+                mergedEntity.dxfType = "ATTRIB"
+                mergedEntity.dxfHandle = attrib.handle
+                this._ProcessEntity(mergedEntity, null)
             }
         }
     }
