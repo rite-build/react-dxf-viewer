@@ -1154,6 +1154,7 @@ function rt({
       return T.current = m, m.Subscribe("loaded", () => {
         var M;
         console.log("DXF loaded successfully");
+        console.log("yarinnnnnnnnnnnnnnnnnnnn");
         const g = m.GetBounds();
         if (g) {
           const V = m.GetOrigin();
