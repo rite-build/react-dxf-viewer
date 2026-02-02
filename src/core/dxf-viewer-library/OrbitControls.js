@@ -10,7 +10,12 @@ import * as THREE from "three"
 //    Zoom - middle mouse, or mousewheel / touch: two-finger spread or squish
 //    Pan - right mouse, or left mouse + ctrl/meta/shiftKey, or arrow keys / touch: two-finger move
 
-export const OrbitControls = function ( object, domElement ) {
+/**
+ * @constructor
+ * @param {import("three").Camera} object
+ * @param {HTMLElement} domElement
+ */
+export function OrbitControls( object, domElement ) {
 
 	if ( domElement === undefined ) console.warn( 'THREE.OrbitControls: The second parameter "domElement" is now mandatory.' );
 	if ( domElement === document ) console.error( 'THREE.OrbitControls: "document" should not be used as the target "domElement". Please use "renderer.domElement" instead.' );
@@ -89,18 +94,27 @@ export const OrbitControls = function ( object, domElement ) {
 	// public methods
 	//
 
+	/**
+	 * @return {number}
+	 */
 	this.getPolarAngle = function () {
 
 		return spherical.phi;
 
 	};
 
+	/**
+	 * @return {number}
+	 */
 	this.getAzimuthalAngle = function () {
 
 		return spherical.theta;
 
 	};
 
+	/**
+	 * @type {(domElement: HTMLElement) => void}
+	 */
 	this.listenToKeyEvents = function ( domElement ) {
 
 		domElement.addEventListener( 'keydown', onKeyDown );
@@ -108,6 +122,9 @@ export const OrbitControls = function ( object, domElement ) {
 
 	};
 
+	/**
+	 * @return {void}
+	 */
 	this.saveState = function () {
 
 		scope.target0.copy( scope.target );
@@ -116,6 +133,9 @@ export const OrbitControls = function ( object, domElement ) {
 
 	};
 
+	/**
+	 * @return {void}
+	 */
 	this.reset = function () {
 
 		scope.target.copy( scope.target0 );
@@ -132,6 +152,9 @@ export const OrbitControls = function ( object, domElement ) {
 	};
 
 	// this method is exposed, but perhaps it would be better if we can make it private...
+	/**
+	 * @return {boolean}
+	 */
 	this.update = function () {
 
 		var offset = new THREE.Vector3();
@@ -273,6 +296,9 @@ export const OrbitControls = function ( object, domElement ) {
 
 	}();
 
+	/**
+	 * @return {void}
+	 */
 	this.dispose = function () {
 
 		scope.domElement.removeEventListener( 'contextmenu', onContextMenu );
@@ -1233,7 +1259,12 @@ OrbitControls.prototype.constructor = OrbitControls;
 //    Zoom - middle mouse, or mousewheel / touch: two-finger spread or squish
 //    Pan - left mouse, or arrow keys / touch: one-finger move
 
-export const MapControls = function ( object, domElement ) {
+/**
+ * @constructor
+ * @param {import("three").Camera} object
+ * @param {HTMLElement} domElement
+ */
+export function MapControls( object, domElement ) {
 
 	OrbitControls.call( this, object, domElement );
 
