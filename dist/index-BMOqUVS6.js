@@ -5157,27 +5157,35 @@ class y1 {
   }
 }
 y1.EntityType = d1;
-const ct = /(?:%%([dpcou%]))|(?:\\U\+([0-9a-f]{4}))/gi;
+const ct = /(?:%%([dpcouK%]))|(?:%%(\d{1,3}))|(?:\\U\+([0-9a-f]{4}))/gi;
 function G0(r) {
-  return r.replaceAll(ct, (e, t, n) => {
+  return r.replaceAll(ct, (e, t, n, s) => {
     if (t !== void 0)
       switch (t.toLowerCase()) {
         case "d":
           return "°";
+        // degree symbol °
         case "p":
           return "±";
+        // plus/minus ±
         case "c":
           return "∅";
+        // diameter symbol ∅
         case "o":
           return "";
         case "u":
+          return "";
+        case "k":
           return "";
         case "%":
           return "%";
       }
     else if (n !== void 0) {
-      const s = parseInt(n, 16);
-      return isNaN(s) ? e : String.fromCharCode(s);
+      const i = parseInt(n, 10);
+      return !isNaN(i) && i > 0 && i <= 65535 ? String.fromCharCode(i) : "";
+    } else if (s !== void 0) {
+      const i = parseInt(s, 16);
+      return isNaN(i) ? e : String.fromCharCode(i);
     }
     return e;
   });
@@ -16098,9 +16106,12 @@ class c2 {
     if (this.textRenderer.canRender)
       for (const o of n) {
         const l = o.tag ? t.attdefs.get(o.tag) : null;
-        if (!l && o.tag && console.warn(`[DxfScene] ATTRIB with tag '${o.tag}' has no matching ATTDEF in block '${t.data.name}'`), (o.hidden || l && l.hidden) && this.attMode !== 2)
+        if (!!o.hidden && this.attMode !== 2)
           continue;
-        const c = o.text ?? (l == null ? void 0 : l.text) ?? "", p = o.textHeight ?? (l == null ? void 0 : l.textHeight) ?? 1, f = o.scale ?? (l == null ? void 0 : l.scale) ?? 1, d = p * f, v = o.rotation ?? (l == null ? void 0 : l.rotation) ?? 0, y = o.horizontalJustification ?? (l == null ? void 0 : l.horizontalJustification) ?? 0, m = o.verticalJustification ?? (l == null ? void 0 : l.verticalJustification) ?? 0;
+        const c = o.text ?? (l == null ? void 0 : l.text) ?? "";
+        if (!c || c.length === 0)
+          continue;
+        const p = o.textHeight ?? (l == null ? void 0 : l.textHeight) ?? 1, f = o.scale ?? (l == null ? void 0 : l.scale) ?? 1, d = p, v = o.rotation ?? (l == null ? void 0 : l.rotation) ?? 0, y = o.horizontalJustification ?? (l == null ? void 0 : l.horizontalJustification) ?? 0, m = o.verticalJustification ?? (l == null ? void 0 : l.verticalJustification) ?? 0;
         o.textStyle ?? (l == null || l.textStyle);
         let g = o.startPoint, A = o.endPoint, S = !1;
         if (!g && (l != null && l.startPoint) && (g = l.startPoint, A = l.endPoint, S = !0), !g)
@@ -16108,6 +16119,7 @@ class c2 {
         const E = S ? new R(g.x, g.y).applyMatrix3(s) : new R(g.x, g.y), w = A ? S ? new R(A.x, A.y).applyMatrix3(s) : new R(A.x, A.y) : E, L = this._GetEntityLayer(o, null) ?? i, F = this._GetEntityColor(o, null) ?? a, C = this.textRenderer.RenderMerged({
           text: G0(c),
           fontSize: d,
+          widthFactor: f,
           startPos: E,
           endPos: w,
           rotation: v,
@@ -16116,7 +16128,7 @@ class c2 {
           color: F,
           layer: L
         });
-        C && (C.dxfType = "ATTRIB", C.dxfHandle = o.handle, this._ProcessEntity(C, null));
+        C ? (C.vertices && C.vertices.length > 0 && C.vertices[0], C.dxfType = "ATTRIB", C.dxfHandle = o.handle, this._ProcessEntity(C, null)) : console.warn(`[ATTRIB] RenderMerged returned null for text="${c}"`);
       }
   }
   *_DecomposeAttribute(e, t) {
@@ -16676,26 +16688,31 @@ class c2 {
       console.warn("Unresolved block reference in INSERT: " + e.name);
       return;
     }
-    if (!n.HasGeometry())
+    const s = n.HasGeometry(), i = e.attribs || [];
+    if (!s && i.length === 0)
       return;
-    const s = this._GetEntityLayer(e, null), i = this._GetEntityColor(e, null), a = this._GetLineType(e, null, null), o = n.InstantiationContext().GetInsertionTransform(e), l = n.bounds;
-    if (this._UpdateBounds(new R(l.minX, l.minY).applyMatrix3(o)), this._UpdateBounds(new R(l.maxX, l.maxY).applyMatrix3(o)), this._UpdateBounds(new R(l.minX, l.maxY).applyMatrix3(o)), this._UpdateBounds(new R(l.maxX, l.minY).applyMatrix3(o)), o.translate(-this.origin.x, -this.origin.y), n.flatten)
-      for (const c of n.batches)
-        this._FlattenBatch(c, s, i, a, o);
-    else {
-      const c = new J(
-        s,
-        e.name,
-        J.GeometryType.BLOCK_INSTANCE,
-        i,
-        a,
-        e.handle,
-        e.type
-      );
-      this._GetBatch(c).PushInstanceTransform(o);
+    const a = this._GetEntityLayer(e, null), o = this._GetEntityColor(e, null), l = this._GetLineType(e, null, null), u = n.InstantiationContext().GetInsertionTransform(e);
+    if (s && n.bounds) {
+      const c = n.bounds;
+      this._UpdateBounds(new R(c.minX, c.minY).applyMatrix3(u)), this._UpdateBounds(new R(c.maxX, c.maxY).applyMatrix3(u)), this._UpdateBounds(new R(c.minX, c.maxY).applyMatrix3(u)), this._UpdateBounds(new R(c.maxX, c.minY).applyMatrix3(u));
     }
-    const u = e.attribs || [];
-    u.length > 0 && this._ProcessInsertAttributes(e, n, u, o, s, i);
+    if (u.translate(-this.origin.x, -this.origin.y), s)
+      if (n.flatten)
+        for (const c of n.batches)
+          this._FlattenBatch(c, a, o, l, u);
+      else {
+        const c = new J(
+          a,
+          e.name,
+          J.GeometryType.BLOCK_INSTANCE,
+          o,
+          l,
+          e.handle,
+          e.type
+        );
+        this._GetBatch(c).PushInstanceTransform(u);
+      }
+    i.length > 0 && this._ProcessInsertAttributes(e, n, i, u, a, o);
   }
   /** Flatten block definition batch. It is merged into suitable instant rendering batch. */
   _FlattenBatch(e, t, n, s, i) {
@@ -17335,8 +17352,11 @@ class F0 {
     const o = e.position.y;
     if (t.scale(s, n), t.rotate(i), t.translate(a, o), e.extrusionDirection && e.extrusionDirection.z < 0 && t.scale(-1, 1), this.type !== F0.Type.INSTANTIATION)
       return t;
-    const l = new L0().translate(this.block.offset.x, this.block.offset.y);
-    return t.multiply(l);
+    if (this.block.offset) {
+      const l = new L0().translate(this.block.offset.x, this.block.offset.y);
+      return t.multiply(l);
+    }
+    return t;
   }
   /**
    * Create context for nested block.
