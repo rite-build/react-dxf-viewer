@@ -11,6 +11,7 @@ export class DxfFetcher {
     async Fetch(progressCbk = null) {
         const response = await fetch(this.url)
         const totalSize = +response.headers.get('Content-Length')
+
         const reader = response.body.getReader()
         let receivedSize = 0
         //XXX streaming parsing is not supported in dxf-parser for now (its parseStream() method

@@ -364,7 +364,7 @@ export class DxfScene {
             break
         case "ATTRIB":
             // Skip ATTRIB entities that belong to INSERT entities - they're processed in _ProcessInsert
-            if (entity.ownerHandle && this.inserts.has(entity.ownerHandle)) {
+            if (entity.ownerHandle && this.inserts && this.inserts.has(entity.ownerHandle)) {
                 return
             }
             renderEntities = this._DecomposeAttribute(entity, blockCtx)
@@ -722,17 +722,20 @@ export class DxfScene {
             // Match ATTRIB to ATTDEF by tag name
             const attdef = attrib.tag ? block.attdefs.get(attrib.tag) : null
 
+            if (!attdef && attrib.tag) {
+                console.warn(`[DxfScene] ATTRIB with tag '${attrib.tag}' has no matching ATTDEF in block '${block.data.name}'`)
+            }
+
             // Check visibility: ATTRIB hidden flag takes precedence, then ATTDEF hidden flag
+            // Note: Basic filtering is handled by _FilterEntity, but we check here for specific attribute logic
             const isHidden = attrib.hidden || (attdef && attdef.hidden)
-            
-            if (this.attMode === 0) continue;
             
             if (isHidden && this.attMode !== 2) {
                 continue
             }
 
             // Merge properties: ATTRIB values override ATTDEF defaults
-            const text = attrib.text ?? (attdef?.text ?? "")
+            const text = attrib.text ?? attdef?.text ?? ""
             const textHeight = attrib.textHeight ?? attdef?.textHeight ?? 1
             const scale = attrib.scale ?? attdef?.scale ?? 1
             const fontSize = textHeight * scale

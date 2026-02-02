@@ -222,6 +222,8 @@ export class TextRenderer {
     RenderMerged({text, startPos, endPos, rotation = 0, widthFactor = 1, hAlign = 0, vAlign = 0,
                   color, layer = null, fontSize}) {
         
+        if (!text || text.trim() === '') return null;
+
         // Build the text block (same as Render)
         const block = new TextBlock(fontSize)
         for (const char of text) {

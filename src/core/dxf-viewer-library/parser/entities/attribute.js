@@ -17,10 +17,13 @@ EntityParser.prototype.parseEntity = function (scanner, curr) {
             break;
         }
         
-        if (curr.code === 100 && (curr.value === 'AcDbXrecord' || (typeof curr.value === 'string' && curr.value.toUpperCase() === 'ACDBXRECORD'))) {
-            isXRecord = true;
-        } else if (curr.code === 100 && curr.value === 'AcDbAttribute') {
-            isXRecord = false;
+        if (curr.code === 100) {
+            const val = typeof curr.value === 'string' ? curr.value.toUpperCase() : '';
+            if (val === 'ACDBXRECORD') {
+                isXRecord = true;
+            } else if (val === 'ACDBATTRIBUTE') {
+                isXRecord = false;
+            }
         }
         
         if (!isXRecord) {
