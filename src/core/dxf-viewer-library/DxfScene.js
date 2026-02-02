@@ -201,7 +201,6 @@ export class DxfScene {
             this._ProcessDxfEntity(entity)
         }
         console.log(`${this.numEntitiesFiltered} entities filtered`)
-
         this.scene = this._BuildScene()
 
         delete this.batches
@@ -722,13 +721,9 @@ export class DxfScene {
             // Match ATTRIB to ATTDEF by tag name
             const attdef = attrib.tag ? block.attdefs.get(attrib.tag) : null
 
-            if (!attdef && attrib.tag) {
-                console.warn(`[DxfScene] ATTRIB with tag '${attrib.tag}' has no matching ATTDEF in block '${block.data.name}'`)
-            }
-
-            // Check visibility: ATTRIB hidden flag takes precedence, then ATTDEF hidden flag
-            // Note: Basic filtering is handled by _FilterEntity, but we check here for specific attribute logic
-            const isHidden = attrib.hidden || (attdef && attdef.hidden)
+            // Check visibility: ATTRIB instance flag is definitive (not ATTDEF)
+            // If ATTRIB says visible (flag 0), show it regardless of ATTDEF default
+            const isHidden = !!attrib.hidden
             
             if (isHidden && this.attMode !== 2) {
                 continue
@@ -736,9 +731,15 @@ export class DxfScene {
 
             // Merge properties: ATTRIB values override ATTDEF defaults
             const text = attrib.text ?? attdef?.text ?? ""
+            
+            // Skip empty text
+            if (!text || text.length === 0) {
+                continue
+            }
+            
             const textHeight = attrib.textHeight ?? attdef?.textHeight ?? 1
-            const scale = attrib.scale ?? attdef?.scale ?? 1
-            const fontSize = textHeight * scale
+            const widthFactor = attrib.scale ?? attdef?.scale ?? 1
+            const fontSize = textHeight
             const rotation = attrib.rotation ?? attdef?.rotation ?? 0
             const hAlign = attrib.horizontalJustification ?? attdef?.horizontalJustification ?? 0
             const vAlign = attrib.verticalJustification ?? attdef?.verticalJustification ?? 0
@@ -781,6 +782,7 @@ export class DxfScene {
             const mergedEntity = this.textRenderer.RenderMerged({
                 text: ParseSpecialChars(text),
                 fontSize,
+                widthFactor,
                 startPos: transformedStart,
                 endPos: transformedEnd,
                 rotation,
@@ -791,9 +793,15 @@ export class DxfScene {
             })
 
             if (mergedEntity) {
+                // Log first vertex to check coordinates
+                if (mergedEntity.vertices && mergedEntity.vertices.length > 0) {
+                    const v = mergedEntity.vertices[0]
+                }
                 mergedEntity.dxfType = "ATTRIB"
                 mergedEntity.dxfHandle = attrib.handle
                 this._ProcessEntity(mergedEntity, null)
+            } else {
+                console.warn(`[ATTRIB] RenderMerged returned null for text="${text}"`)
             }
         }
     }
@@ -1708,7 +1716,11 @@ export class DxfScene {
             console.warn("Unresolved block reference in INSERT: " + entity.name)
             return
         }
-        if (!block.HasGeometry()) {
+        // Check if block has geometry or attributes to process
+        const hasGeometry = block.HasGeometry()
+        const attribs = entity.attribs || []
+        
+        if (!hasGeometry && attribs.length === 0) {
             return
         }
 
@@ -1719,27 +1731,31 @@ export class DxfScene {
         const transform = block.InstantiationContext().GetInsertionTransform(entity)
 
         /* Update bounding box and origin with transformed block bounds corner points. */
-        const bounds = block.bounds
-        this._UpdateBounds(new Vector2(bounds.minX, bounds.minY).applyMatrix3(transform))
-        this._UpdateBounds(new Vector2(bounds.maxX, bounds.maxY).applyMatrix3(transform))
-        this._UpdateBounds(new Vector2(bounds.minX, bounds.maxY).applyMatrix3(transform))
-        this._UpdateBounds(new Vector2(bounds.maxX, bounds.minY).applyMatrix3(transform))
+        if (hasGeometry && block.bounds) {
+            const bounds = block.bounds
+            this._UpdateBounds(new Vector2(bounds.minX, bounds.minY).applyMatrix3(transform))
+            this._UpdateBounds(new Vector2(bounds.maxX, bounds.maxY).applyMatrix3(transform))
+            this._UpdateBounds(new Vector2(bounds.minX, bounds.maxY).applyMatrix3(transform))
+            this._UpdateBounds(new Vector2(bounds.maxX, bounds.minY).applyMatrix3(transform))
+        }
 
         transform.translate(-this.origin.x, -this.origin.y)
+        
         //XXX grid instancing not supported yet
-        if (block.flatten) {
-            for (const batch of block.batches) {
-                this._FlattenBatch(batch, layer, color, lineType, transform)
+        if (hasGeometry) {
+            if (block.flatten) {
+                for (const batch of block.batches) {
+                    this._FlattenBatch(batch, layer, color, lineType, transform)
+                }
+            } else {
+                const key = new BatchingKey(layer, entity.name, BatchingKey.GeometryType.BLOCK_INSTANCE,
+                                            color, lineType, entity.handle, entity.type)
+                const batch = this._GetBatch(key)
+                batch.PushInstanceTransform(transform)
             }
-        } else {
-            const key = new BatchingKey(layer, entity.name, BatchingKey.GeometryType.BLOCK_INSTANCE,
-                                        color, lineType, entity.handle, entity.type)
-            const batch = this._GetBatch(key)
-            batch.PushInstanceTransform(transform)
         }
 
         // Process ATTRIB entities attached to this INSERT (parsed by INSERT parser)
-        const attribs = entity.attribs || []
         if (attribs.length > 0) {
             this._ProcessInsertAttributes(entity, block, attribs, transform, layer, color)
         }
@@ -2812,8 +2828,12 @@ class BlockContext {
         if (this.type !== BlockContext.Type.INSTANTIATION) {
             return mInsert
         }
-        const mOffset = new Matrix3().translate(this.block.offset.x, this.block.offset.y)
-        return mInsert.multiply(mOffset)
+        // For blocks with geometry, apply the offset; for attribute-only blocks, offset may be null
+        if (this.block.offset) {
+            const mOffset = new Matrix3().translate(this.block.offset.x, this.block.offset.y)
+            return mInsert.multiply(mOffset)
+        }
+        return mInsert
     }
 
     /**

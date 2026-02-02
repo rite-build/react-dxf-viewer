@@ -4,8 +4,13 @@ import {ShapeUtils} from "three/src/extras/ShapeUtils.js"
 import {Matrix3, Vector2} from "three"
 import {MTextFormatParser} from "./MTextFormatParser.js"
 
-/** Regex for parsing special characters in text entities. */
-const SPECIAL_CHARS_RE = /(?:%%([dpcou%]))|(?:\\U\+([0-9a-f]{4}))/gi
+/** Regex for parsing special characters in text entities.
+ * Matches:
+ *   %%d, %%p, %%c, %%o, %%u, %%k, %%% - single letter codes
+ *   %%nnn - decimal Unicode character code (1-3 digits)
+ *   \U+XXXX - hex Unicode escape
+ */
+const SPECIAL_CHARS_RE = /(?:%%([dpcouK%]))|(?:%%(\d{1,3}))|(?:\\U\+([0-9a-f]{4}))/gi
 
 /**
  * Parse special characters in text entities and convert them to corresponding unicode
@@ -15,26 +20,38 @@ const SPECIAL_CHARS_RE = /(?:%%([dpcou%]))|(?:\\U\+([0-9a-f]{4}))/gi
  * @return {string} String with special characters replaced.
  */
 export function ParseSpecialChars(text) {
-    return text.replaceAll(SPECIAL_CHARS_RE, (match, p1, p2) => {
+    return text.replaceAll(SPECIAL_CHARS_RE, (match, p1, p2, p3) => {
         if (p1 !== undefined) {
+            // Single letter codes: %%d, %%p, %%c, etc.
             switch (p1.toLowerCase()) {
             case "d":
-                return "\xb0"
+                return "\xb0" // degree symbol °
             case "p":
-                return "\xb1"
+                return "\xb1" // plus/minus ±
             case "c":
-                return "\u2205"
+                return "\u2205" // diameter symbol ∅
             case "o":
                 /* Toggles overscore mode on and off, not implemented. */
                 return ""
             case "u":
                 /* Toggles underscore mode on and off, not implemented. */
                 return ""
+            case "k":
+                /* Toggles strikethrough mode on and off, not implemented. */
+                return ""
             case "%":
                 return "%"
             }
         } else if (p2 !== undefined) {
-            const code = parseInt(p2, 16)
+            // Decimal character code: %%nnn (e.g., %%130)
+            const code = parseInt(p2, 10)
+            if (!isNaN(code) && code > 0 && code <= 0xFFFF) {
+                return String.fromCharCode(code)
+            }
+            return "" // Invalid code, remove it
+        } else if (p3 !== undefined) {
+            // Hex Unicode escape: \U+XXXX
+            const code = parseInt(p3, 16)
             if (isNaN(code)) {
                 return match
             }
