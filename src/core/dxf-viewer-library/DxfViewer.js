@@ -113,6 +113,9 @@ export class DxfViewer {
 
         /** Set during data loading. */
         this.worker = null
+
+        /** @type {?OrbitControls} */
+        this.controls = null
     }
 
     /**

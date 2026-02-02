@@ -2,6 +2,13 @@ import React, { useState, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import { DxfViewer } from './index';
 
+// Font for text rendering (using Google Fonts CDN)
+// Note: This external dependency is used for demonstration purposes.
+// Production applications should host fonts locally or use a reliable CDN.
+const FONTS = [
+  'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf'
+];
+
 function App() {
   const [file, setFile] = useState<ArrayBuffer | null>(null);
   const [fileName, setFileName] = useState<string>('');
@@ -58,6 +65,7 @@ function App() {
           <DxfViewer
             file={file}
             fileName={fileName}
+            fonts={FONTS}
             selectedHandles={selectedHandles}
             onSelectionChange={handleSelectionChange}
             onLoad={handleLoad}
