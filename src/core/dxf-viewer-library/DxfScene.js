@@ -373,7 +373,7 @@ export class DxfScene {
             break
         case "LEADER":
             renderEntities = this._DecomposeLeader(entity, blockCtx)
-            break;
+            break; 
         default:
             console.log("Unhandled entity type: " + entity.type)
             return
