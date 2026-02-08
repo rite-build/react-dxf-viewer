@@ -92,6 +92,7 @@ export default defineConfig({
     }),
   ],
   build: {
+    sourcemap: true,
     lib: {
       entry: resolve(__dirname, 'src/index.ts'),
       name: 'ReactDxfViewer',
@@ -105,7 +106,11 @@ export default defineConfig({
           'react-dom': 'ReactDOM',
           three: 'THREE',
         },
+        sourcemap: true,
       },
+    },
+    watch: {
+      include: 'src/**',
     },
   },
   resolve: {

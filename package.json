@@ -28,9 +28,15 @@
     },
     "./dist/style.css": "./dist/react-dxf-viewer.css"
   },
+  "typesVersions": {
+    "*": {
+      "*": ["./dist/index.d.ts"]
+    }
+  },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "watch": "vite build --watch"
   },
   "dependencies": {
     "three": "^0.170.0",

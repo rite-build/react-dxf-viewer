@@ -14,7 +14,6 @@ node_modules
 
 # IDE
 .idea
-.vscode
 *.swp
 *.swo
 
@@ -29,3 +28,4 @@ pnpm-debug.log*
 .cache
 *.tsbuildinfo
 
+dist
