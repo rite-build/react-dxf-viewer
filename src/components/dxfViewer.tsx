@@ -12,14 +12,7 @@ import {
   SquareDashedMousePointer
 } from "lucide-react";
 
-// Debug: Component loaded
-console.log('[DXF Viewer] Component loaded - Updated at', new Date().toISOString());
-console.log('[DXF Viewer] Hot reload test - BUILD TIME:', new Date(2026, 1, 8, 12, 45, 0).toISOString());
-
-// Hook to store latest callback in ref (prevents effect re-runs)
-export const DXF_BUILD_TIMESTAMP = '2026-02-08T12:50:00Z';
-
-function useLatest<T>(value: T): React.MutableRefObject<T> {
+function useLatest<T>(value: T): React.RefObject<T> {
   const ref = useRef(value);
   useEffect(() => {
     ref.current = value;
@@ -609,4 +602,4 @@ export function DxfViewer({
 }
 
 export default DxfViewer;
-// test change
+
