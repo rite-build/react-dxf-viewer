@@ -201,6 +201,7 @@ export class DxfScene {
             this._ProcessDxfEntity(entity)
         }
         console.log(`${this.numEntitiesFiltered} entities filtered`)
+
         this.scene = this._BuildScene()
 
         delete this.batches
@@ -373,7 +374,10 @@ export class DxfScene {
             break
         case "LEADER":
             renderEntities = this._DecomposeLeader(entity, blockCtx)
-            break; 
+            break;
+        case "MULTILEADER":
+            renderEntities = this._DecomposeMultiLeader(entity, blockCtx)
+            break;
         default:
             console.log("Unhandled entity type: " + entity.type)
             return
@@ -1707,6 +1711,131 @@ export class DxfScene {
         })
     }
 
+    *_DecomposeMultiLeader(entity, blockCtx) {
+        const layer = this._GetEntityLayer(entity, blockCtx)
+        const color = this._GetEntityColor(entity, blockCtx)
+        const context = entity.context
+
+        if (!context) {
+            return
+        }
+
+        // Render leader lines
+        for (const leader of context.leaders) {
+            for (const line of leader.lines) {
+                if (!line.vertices || line.vertices.length === 0) {
+                    continue
+                }
+
+                // Build path: line vertices -> last leader line point -> dogleg
+                const pathVertices = [...line.vertices]
+
+                // Add the connection point (last leader line point) from the leader
+                if (leader.lastLeaderLinePoint) {
+                    pathVertices.push(leader.lastLeaderLinePoint)
+                }
+
+                // Render segments between consecutive vertices
+                for (let i = 0; i < pathVertices.length - 1; i++) {
+                    const start = new Vector2(pathVertices[i].x, pathVertices[i].y)
+                    const end = new Vector2(pathVertices[i + 1].x, pathVertices[i + 1].y)
+
+                    yield new Entity({
+                        type: Entity.Type.LINE_SEGMENTS,
+                        vertices: [start, end],
+                        indices: null,
+                        layer,
+                        color
+                    })
+                }
+
+                // Render arrowhead at the first vertex (tip of the leader line)
+                if (pathVertices.length >= 2) {
+                    const arrowSize = entity.arrowheadSize || 4.0
+                    const v0 = pathVertices[0]
+                    const v1 = pathVertices[1]
+                    const dx = v1.x - v0.x
+                    const dy = v1.y - v0.y
+                    const len = Math.sqrt(dx * dx + dy * dy)
+                    if (len > Number.EPSILON) {
+                        const angle = Math.atan2(dy, dx)
+                        // .rotate() internally negates theta, so we pass -angle
+                        const transform = new Matrix3()
+                            .scale(arrowSize, arrowSize)
+                            .rotate(-angle)
+                            .translate(v0.x, v0.y)
+
+                        const arrowVerts = [
+                            new Vector2(0, 0),
+                            new Vector2(1, -0.25),
+                            new Vector2(1, 0.25)
+                        ].map(v => v.clone().applyMatrix3(transform))
+
+                        yield new Entity({
+                            type: Entity.Type.TRIANGLES,
+                            vertices: arrowVerts,
+                            indices: [0, 1, 2],
+                            layer,
+                            color
+                        })
+                    }
+                }
+            }
+
+            // Render dogleg (landing line) if enabled
+            if (entity.enableDogleg && leader.hasSetDoglegVector &&
+                leader.lastLeaderLinePoint && leader.doglegVector) {
+                const doglegLength = leader.doglegLength || entity.doglegLength || 8.0
+                const start = new Vector2(
+                    leader.lastLeaderLinePoint.x,
+                    leader.lastLeaderLinePoint.y
+                )
+                const end = new Vector2(
+                    leader.lastLeaderLinePoint.x + leader.doglegVector.x * doglegLength,
+                    leader.lastLeaderLinePoint.y + leader.doglegVector.y * doglegLength
+                )
+
+                yield new Entity({
+                    type: Entity.Type.LINE_SEGMENTS,
+                    vertices: [start, end],
+                    indices: null,
+                    layer,
+                    color
+                })
+            }
+        }
+
+        // Render text content (MTEXT)
+        if (entity.contentType === 2 && context.textLabel && this.textRenderer.canRender) {
+            const textContent = context.textLabel
+            const fontSize = context.textHeight || context.textHeightOverride || 4.0
+            const position = context.textPosition || context.contentBasePosition
+            const direction = context.textDirection
+            const width = context.textWidth || context.textDefinedWidth || 0
+
+            if (position) {
+                let rotation = context.textRotation || 0
+                if (direction && (direction.x !== 0 || direction.y !== 0)) {
+                    rotation = Math.atan2(direction.y, direction.x)
+                }
+
+                const parser = new MTextFormatParser()
+                parser.Parse(ParseSpecialChars(textContent))
+                yield* this.textRenderer.RenderMText({
+                    formattedText: parser.GetContent(),
+                    fontSize,
+                    position,
+                    rotation,
+                    direction,
+                    attachment: context.textLeftAttachment || context.textAttachmentDirection || 1,
+                    lineSpacing: context.textLineSpacing,
+                    width,
+                    color, layer
+                })
+            }
+        }
+    }
+
     /**
      * @typedef {Object} HatchBoundaryLoop
      * @property {Vector2[]} vertices List of points in OCS coordinates.
@@ -2550,11 +2679,10 @@ export class DxfScene {
             color = ColorCode.BY_LAYER
         }
         if (color === ColorCode.BY_LAYER) {
-            if (entity.hasOwnProperty("layer")) {
-                const layer = this.layers.get(entity.layer)
-                if (layer && layer.color != null) {
-                    return layer.color
-                }
+            const layerName = entity.hasOwnProperty("layer") ? entity.layer : "0"
+            const layer = this.layers.get(layerName)
+            if (layer && layer.color != null) {
+                return layer.color
             }
         } else {
             return color
