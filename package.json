@@ -1,6 +1,6 @@
 {
   "name": "@rite/react-dxf-viewer",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "type": "module",
   "description": "A React component for viewing DXF files",
   "author": "",
@@ -19,7 +19,6 @@
   "main": "./dist/react-dxf-viewer.umd.js",
   "module": "./dist/react-dxf-viewer.es.js",
   "types": "./dist/index.d.ts",
-  
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -30,7 +29,9 @@
   },
   "typesVersions": {
     "*": {
-      "*": ["./dist/index.d.ts"]
+      "*": [
+        "./dist/index.d.ts"
+      ]
     }
   },
   "scripts": {
@@ -64,4 +65,3 @@
     "react-dom": "^19.0.0"
   }
 }
-
