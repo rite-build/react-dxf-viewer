@@ -1,5 +1,5 @@
 {
-  "name": "@my-org/react-dxf-viewer",
+  "name": "@rite/react-dxf-viewer",
   "version": "0.0.1",
   "type": "module",
   "description": "A React component for viewing DXF files",
