@@ -1123,7 +1123,7 @@ function rt({
   K(() => {
     G(x);
   }, [x]), K(() => {
-    typeof window > "u" || import("./index-BMOqUVS6.js").then((h) => {
+    typeof window > "u" || import("./index-DAnhd26T.js").then((h) => {
       r(() => h.DxfViewer);
     }).catch((h) => {
       console.error("Failed to load DxfViewer:", h), q(h instanceof Error ? h : new Error(String(h))), B(!1);
@@ -1325,3 +1325,4 @@ export {
   Ie as getSafeObjectsBounds,
   Ae as unprojectToPlane
 };
+//# sourceMappingURL=react-dxf-viewer.es.js.map

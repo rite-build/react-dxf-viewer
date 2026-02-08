@@ -9,6 +9,8 @@ import Circle from "./entities/circle.js";
 import Dimension from "./entities/dimension.js";
 import Ellipse from "./entities/ellipse.js";
 import Insert from "./entities/insert.js";
+import Leader from "./entities/leader.js";
+import MultiLeader from "./entities/multileader.js";
 import Line from "./entities/line.js";
 import LWPolyline from "./entities/lwpolyline.js";
 import MText from "./entities/mtext.js";
@@ -40,6 +42,8 @@ function registerDefaultEntityHandlers(dxfParser) {
     dxfParser.registerEntityHandler(Dimension);
     dxfParser.registerEntityHandler(Ellipse);
     dxfParser.registerEntityHandler(Insert);
+    dxfParser.registerEntityHandler(Leader);
+    dxfParser.registerEntityHandler(MultiLeader);
     dxfParser.registerEntityHandler(Line);
     dxfParser.registerEntityHandler(LWPolyline);
     dxfParser.registerEntityHandler(MText);

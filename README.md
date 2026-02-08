@@ -1,4 +1,4 @@
-# @my-org/react-dxf-viewer
+# @rite/react-dxf-viewer
 
 A React component for viewing DXF (AutoCAD) files with interactive entity selection.
 
@@ -44,12 +44,12 @@ A React component for viewing DXF (AutoCAD) files with interactive entity select
 
 2. **Update the library:**
    ```bash
-   pnpm update @my-org/react-dxf-viewer
+   pnpm update @rite/react-dxf-viewer
    ```
 
 3. **If the update doesn't work**, remove and reinstall:
    ```bash
-   pnpm remove @my-org/react-dxf-viewer
+   pnpm remove @rite/react-dxf-viewer
    pnpm add git+https://github.com/YOUR_ORG/react-dxf-viewer.git
    ```
 
@@ -67,7 +67,7 @@ A React component for viewing DXF (AutoCAD) files with interactive entity select
 pnpm add git+https://github.com/YOUR_ORG/react-dxf-viewer.git
 
 # Or via NPM (if published)
-pnpm add @my-org/react-dxf-viewer
+pnpm add @rite/react-dxf-viewer
 ```
 
 ---
@@ -75,8 +75,8 @@ pnpm add @my-org/react-dxf-viewer
 ## 🚀 Usage
 
 ```tsx
-import { DxfViewer } from '@my-org/react-dxf-viewer';
-import '@my-org/react-dxf-viewer/dist/style.css';
+import { DxfViewer } from '@rite/react-dxf-viewer';
+import '@rite/react-dxf-viewer/dist/style.css';
 
 function MyComponent() {
   const [selectedHandles, setSelectedHandles] = useState<string[]>([]);
@@ -156,7 +156,7 @@ src/
 ### CSS not loading
 Make sure you're importing the CSS:
 ```tsx
-import '@my-org/react-dxf-viewer/dist/style.css';
+import '@rite/react-dxf-viewer/dist/style.css';
 ```
 
 ### Changes not reflecting in consumer app

@@ -201,6 +201,7 @@ export class DxfScene {
             this._ProcessDxfEntity(entity)
         }
         console.log(`${this.numEntitiesFiltered} entities filtered`)
+
         this.scene = this._BuildScene()
 
         delete this.batches
@@ -318,7 +319,7 @@ export class DxfScene {
     }
 
     _ProcessDxfEntity(entity, blockCtx = null) {
-        let renderEntities
+        let renderEntities;
         switch (entity.type) {
         case "LINE":
             renderEntities = this._DecomposeLine(entity, blockCtx)
@@ -371,6 +372,12 @@ export class DxfScene {
         case "HATCH":
             renderEntities = this._DecomposeHatch(entity, blockCtx)
             break
+        case "LEADER":
+            renderEntities = this._DecomposeLeader(entity, blockCtx)
+            break;
+        case "MULTILEADER":
+            renderEntities = this._DecomposeMultiLeader(entity, blockCtx)
+            break;
         default:
             console.log("Unhandled entity type: " + entity.type)
             return
@@ -1500,6 +1507,335 @@ export class DxfScene {
         }
     }
 
+    *_DecomposeLeader(entity, blockCtx) {
+        if (!entity.vertices || entity.vertices.length < 2) {
+            return // Invalid leader
+        }
+
+        const layer = this._GetEntityLayer(entity, blockCtx)
+        const color = this._GetEntityColor(entity, blockCtx)
+
+        // Handle path type
+        if (entity.pathType === 0) {
+            // Straight line segments
+            yield* this._DecomposeLeaderStraightPath(entity, blockCtx, layer, color)
+        } else if (entity.pathType === 1) {
+            // Spline path
+            yield* this._DecomposeLeaderSplinePath(entity, blockCtx, layer, color)
+        }
+
+        // Handle arrowhead
+        if (entity.arrowheadEnabled && entity.vertices.length >= 2) {
+            yield* this._DecomposeLeaderArrowhead(entity, blockCtx, layer, color)
+        }
+
+        // Handle hookline
+        if (entity.hasHookline && entity.vertices.length >= 2) {
+            yield* this._DecomposeLeaderHookline(entity, blockCtx, layer, color)
+        }
+
+        // Note: Annotation references (group 340) handled separately by text/block systems
+    }
+
+    *_DecomposeLeaderStraightPath(entity, blockCtx, layer, color) {
+        const transform = this._GetEntityExtrusionTransform(entity)
+        const vertices = entity.vertices
+
+        for (let i = 0; i < vertices.length - 1; i++) {
+            let start = new Vector2(vertices[i].x, vertices[i].y)
+            let end = new Vector2(vertices[i + 1].x, vertices[i + 1].y)
+
+            if (transform) {
+                start.applyMatrix3(transform)
+                end.applyMatrix3(transform)
+            }
+
+            yield new Entity({
+                type: Entity.Type.LINE_SEGMENTS,
+                vertices: [start, end],
+                indices: null,
+                layer,
+                color
+            })
+        }
+    }
+
+    _TessellateLeaderSpline(vertices) {
+        const subdivisions = this.options.splineSubdivision || 4
+        const tessellated = []
+
+        for (let i = 0; i < vertices.length - 1; i++) {
+            const v0 = vertices[i]
+            const v1 = vertices[i + 1]
+
+            for (let j = 0; j <= subdivisions; j++) {
+                const t = j / subdivisions
+                tessellated.push({
+                    x: v0.x + (v1.x - v0.x) * t,
+                    y: v0.y + (v1.y - v0.y) * t,
+                    z: (v0.z || 0) + ((v1.z || 0) - (v0.z || 0)) * t
+                })
+            }
+        }
+
+        return tessellated
+    }
+
+    *_DecomposeLeaderSplinePath(entity, blockCtx, layer, color) {
+        const transform = this._GetEntityExtrusionTransform(entity)
+        const tessellatedVertices = this._TessellateLeaderSpline(entity.vertices)
+
+        const vertices = tessellatedVertices.map(v => {
+            const vertex = new Vector2(v.x, v.y)
+            if (transform) {
+                vertex.applyMatrix3(transform)
+            }
+            return vertex
+        })
+
+        yield new Entity({
+            type: Entity.Type.POLYLINE,
+            vertices,
+            shape: false, // Not closed
+            layer,
+            color
+        })
+    }
+
+    *_DecomposeLeaderArrowhead(entity, blockCtx, layer, color) {
+        // Get dimension style
+        let style = null
+        if (entity.dimStyleName) {
+            style = this.dimStyles.get(entity.dimStyleName)
+        }
+        const styleResolver = valueName => this._GetDimStyleValue(valueName, entity, style)
+
+        // Get arrowhead size
+        const arrowSize = styleResolver("DIMASZ") || 0.18
+
+        // Calculate arrowhead direction from first two vertices
+        const v0 = entity.vertices[0]
+        const v1 = entity.vertices[1]
+        let direction = {
+            x: v1.x - v0.x,
+            y: v1.y - v0.y,
+            z: (v1.z || 0) - (v0.z || 0)
+        }
+        const length = Math.sqrt(direction.x * direction.x + direction.y * direction.y + direction.z * direction.z)
+        if (length < Number.MIN_VALUE) {
+            return // Zero-length direction vector
+        }
+        direction.x /= length
+        direction.y /= length
+        direction.z /= length
+
+        // Create arrowhead triangle using pattern from LinearDimension
+        const arrowHeadShape = {
+            vertices: [
+                new Vector2(0, 0),
+                new Vector2(1, -0.25),
+                new Vector2(1, 0.25)
+            ],
+            indices: [0, 1, 2]
+        }
+
+        // Create transform: scale, rotate, then translate (order matters - last operation applied first)
+        const angle = Math.atan2(direction.y, direction.x)
+        const transform = new Matrix3()
+            .scale(arrowSize, arrowSize)
+            .rotate(angle)
+            .translate(v0.x, v0.y)
+
+        // Transform arrowhead shape vertices
+        let transformedVertices = arrowHeadShape.vertices.map(v => v.clone().applyMatrix3(transform))
+
+        // Apply extrusion transform if present (after arrowhead transform)
+        const extrusionTransform = this._GetEntityExtrusionTransform(entity)
+        if (extrusionTransform) {
+            transformedVertices = transformedVertices.map(v => v.applyMatrix3(extrusionTransform))
+        }
+
+        yield new Entity({
+            type: Entity.Type.TRIANGLES,
+            vertices: transformedVertices,
+            indices: arrowHeadShape.indices,
+            layer,
+            color
+        })
+    }
+
+    *_DecomposeLeaderHookline(entity, blockCtx, layer, color) {
+        // Get dimension style
+        let style = null
+        if (entity.dimStyleName) {
+            style = this.dimStyles.get(entity.dimStyleName)
+        }
+        const styleResolver = valueName => this._GetDimStyleValue(valueName, entity, style)
+
+        // Get hookline length
+        const hooklineLength = styleResolver("DIMGAP") || 0.09
+
+        // Get last vertex
+        const lastVertex = entity.vertices[entity.vertices.length - 1]
+
+        // Get horizontal direction
+        const horizontalDir = entity.horizontalDirection || {x: 1, y: 0, z: 0}
+
+        // Determine hookline direction
+        const direction = entity.hooklineDirection === 0 ? -1 : 1
+
+        // Calculate hookline end point
+        const hooklineEnd = {
+            x: lastVertex.x + (horizontalDir.x * hooklineLength * direction),
+            y: lastVertex.y + (horizontalDir.y * hooklineLength * direction),
+            z: (lastVertex.z || 0) + ((horizontalDir.z || 0) * hooklineLength * direction)
+        }
+
+        // Get transform
+        const transform = this._GetEntityExtrusionTransform(entity)
+
+        let start = new Vector2(lastVertex.x, lastVertex.y)
+        let end = new Vector2(hooklineEnd.x, hooklineEnd.y)
+
+        if (transform) {
+            start.applyMatrix3(transform)
+            end.applyMatrix3(transform)
+        }
+
+        yield new Entity({
+            type: Entity.Type.LINE_SEGMENTS,
+            vertices: [start, end],
+            indices: null,
+            layer,
+            color
+        })
+    }
+
+    *_DecomposeMultiLeader(entity, blockCtx) {
+        const layer = this._GetEntityLayer(entity, blockCtx)
+        const color = this._GetEntityColor(entity, blockCtx)
+        const context = entity.context
+
+        if (!context) {
+            return
+        }
+
+        // Render leader lines
+        for (const leader of context.leaders) {
+            for (const line of leader.lines) {
+                if (!line.vertices || line.vertices.length === 0) {
+                    continue
+                }
+
+                // Build path: line vertices -> last leader line point -> dogleg
+                const pathVertices = [...line.vertices]
+
+                // Add the connection point (last leader line point) from the leader
+                if (leader.lastLeaderLinePoint) {
+                    pathVertices.push(leader.lastLeaderLinePoint)
+                }
+
+                // Render segments between consecutive vertices
+                for (let i = 0; i < pathVertices.length - 1; i++) {
+                    const start = new Vector2(pathVertices[i].x, pathVertices[i].y)
+                    const end = new Vector2(pathVertices[i + 1].x, pathVertices[i + 1].y)
+
+                    yield new Entity({
+                        type: Entity.Type.LINE_SEGMENTS,
+                        vertices: [start, end],
+                        indices: null,
+                        layer,
+                        color
+                    })
+                }
+
+                // Render arrowhead at the first vertex (tip of the leader line)
+                if (pathVertices.length >= 2) {
+                    const arrowSize = entity.arrowheadSize || 4.0
+                    const v0 = pathVertices[0]
+                    const v1 = pathVertices[1]
+                    const dx = v1.x - v0.x
+                    const dy = v1.y - v0.y
+                    const len = Math.sqrt(dx * dx + dy * dy)
+                    if (len > Number.EPSILON) {
+                        const angle = Math.atan2(dy, dx)
+                        // .rotate() internally negates theta, so we pass -angle
+                        const transform = new Matrix3()
+                            .scale(arrowSize, arrowSize)
+                            .rotate(-angle)
+                            .translate(v0.x, v0.y)
+
+                        const arrowVerts = [
+                            new Vector2(0, 0),
+                            new Vector2(1, -0.25),
+                            new Vector2(1, 0.25)
+                        ].map(v => v.clone().applyMatrix3(transform))
+
+                        yield new Entity({
+                            type: Entity.Type.TRIANGLES,
+                            vertices: arrowVerts,
+                            indices: [0, 1, 2],
+                            layer,
+                            color
+                        })
+                    }
+                }
+            }
+
+            // Render dogleg (landing line) if enabled
+            if (entity.enableDogleg && leader.hasSetDoglegVector &&
+                leader.lastLeaderLinePoint && leader.doglegVector) {
+                const doglegLength = leader.doglegLength || entity.doglegLength || 8.0
+                const start = new Vector2(
+                    leader.lastLeaderLinePoint.x,
+                    leader.lastLeaderLinePoint.y
+                )
+                const end = new Vector2(
+                    leader.lastLeaderLinePoint.x + leader.doglegVector.x * doglegLength,
+                    leader.lastLeaderLinePoint.y + leader.doglegVector.y * doglegLength
+                )
+
+                yield new Entity({
+                    type: Entity.Type.LINE_SEGMENTS,
+                    vertices: [start, end],
+                    indices: null,
+                    layer,
+                    color
+                })
+            }
+        }
+
+        // Render text content (MTEXT)
+        if (entity.contentType === 2 && context.textLabel && this.textRenderer.canRender) {
+            const textContent = context.textLabel
+            const fontSize = context.textHeight || context.textHeightOverride || 4.0
+            const position = context.textPosition || context.contentBasePosition
+            const direction = context.textDirection
+            const width = context.textWidth || context.textDefinedWidth || 0
+
+            if (position) {
+                let rotation = context.textRotation || 0
+                if (direction && (direction.x !== 0 || direction.y !== 0)) {
+                    rotation = Math.atan2(direction.y, direction.x)
+                }
+
+                const parser = new MTextFormatParser()
+                parser.Parse(ParseSpecialChars(textContent))
+                yield* this.textRenderer.RenderMText({
+                    formattedText: parser.GetContent(),
+                    fontSize,
+                    position,
+                    rotation,
+                    direction,
+                    attachment: context.textLeftAttachment || context.textAttachmentDirection || 1,
+                    lineSpacing: context.textLineSpacing,
+                    width,
+                    color, layer
+                })
+            }
+        }
+    }
+
     /**
      * @typedef {Object} HatchBoundaryLoop
      * @property {Vector2[]} vertices List of points in OCS coordinates.
@@ -2343,11 +2679,10 @@ export class DxfScene {
             color = ColorCode.BY_LAYER
         }
         if (color === ColorCode.BY_LAYER) {
-            if (entity.hasOwnProperty("layer")) {
-                const layer = this.layers.get(entity.layer)
-                if (layer && layer.color != null) {
-                    return layer.color
-                }
+            const layerName = entity.hasOwnProperty("layer") ? entity.layer : "0"
+            const layer = this.layers.get(layerName)
+            if (layer && layer.color != null) {
+                return layer.color
             }
         } else {
             return color

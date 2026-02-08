@@ -12,8 +12,7 @@ import {
   SquareDashedMousePointer
 } from "lucide-react";
 
-// Hook to store latest callback in ref (prevents effect re-runs)
-function useLatest<T>(value: T): React.MutableRefObject<T> {
+function useLatest<T>(value: T): React.RefObject<T> {
   const ref = useRef(value);
   useEffect(() => {
     ref.current = value;
@@ -603,3 +602,4 @@ export function DxfViewer({
 }
 
 export default DxfViewer;
+

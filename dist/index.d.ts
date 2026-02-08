@@ -1,5 +1,5 @@
 /**
- * @my-org/react-dxf-viewer
+ * @rite/react-dxf-viewer
  *
  * A React component for viewing DXF (AutoCAD) files.
  */
